@@ -1,0 +1,556 @@
+#LyX 2.3 created this file. For more info see http://www.lyx.org/
+\lyxformat 544
+\begin_document
+\begin_header
+\save_transient_properties true
+\origin unavailable
+\textclass article
+\use_default_options true
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman "default" "default"
+\font_sans "default" "default"
+\font_typewriter "default" "default"
+\font_math "auto" "auto"
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100 100
+\font_tt_scale 100 100
+\use_microtype false
+\use_dash_ligatures true
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\spacing single
+\use_hyperref false
+\papersize default
+\use_geometry false
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine natbib
+\cite_engine_type authoryear
+\biblio_style plainnat
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 1
+\use_minted 0
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\is_math_indent 0
+\math_numbering_side default
+\quotes_style english
+\dynamic_quotes 0
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+The social evolution of the stress response
+\end_layout
+
+\begin_layout Standard
+\begin_inset Note Note
+status open
+
+\begin_layout Plain Layout
+Also think of:
+\end_layout
+
+\begin_layout Plain Layout
+- animals leaving the patch in response to a stressor schmessor
+\end_layout
+
+\begin_layout Plain Layout
+- role of communication between adults or between adults and offspring might
+ be helpful
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Traits
+\end_layout
+
+\begin_layout Standard
+Let 
+\begin_inset Formula $z_{\mathrm{f}}$
+\end_inset
+
+ and 
+\begin_inset Formula $z_{\mathrm{m}}$
+\end_inset
+
+ be stress hormone levels in females and males, which reduce risk of death
+ due to predation but result in other costs down the line.
+ 
+\end_layout
+
+\begin_layout Section
+Life cycle
+\end_layout
+
+\begin_layout Standard
+To develop a demographically consistent model of stress response evolution,
+ we focus on an infinite-island population 
+\begin_inset CommandInset citation
+LatexCommand citep
+key "Rousset2004"
+literal "false"
+
+\end_inset
+
+, in which patches of 
+\begin_inset Formula $n_{\mathrm{f}}$
+\end_inset
+
+ and 
+\begin_inset Formula $n_{\mathrm{m}}$
+\end_inset
+
+ female and male breeders are linked by juvenile dispersal, so that juvenile
+ females and males disperse at probabilities 
+\begin_inset Formula $d_{\mathrm{f}}$
+\end_inset
+
+ and 
+\begin_inset Formula $d_{\mathrm{m}}$
+\end_inset
+
+ 
+\begin_inset Note Note
+status open
+
+\begin_layout Plain Layout
+if thinking about hopping around in response to the stressor, then we need
+ adult dispersal as well
+\end_layout
+
+\end_inset
+
+.
+ In doing so, we use a demographically consistent approach in which relatedness
+ coefficients are not parameters in themselves, but `emerge' from the underlying
+ population dynamics, which themselves are a result of dispersal probabilities,
+ patch densities and mortalities.
+\end_layout
+
+\begin_layout Standard
+At the first step of the life cycle, the 
+\begin_inset Formula $n_{\mathrm{f}}$
+\end_inset
+
+ and 
+\begin_inset Formula $n_{\mathrm{m}}$
+\end_inset
+
+ female and male breeders in each patch mate randomly within the local patch,
+ after which they give birth to a large number of 
+\begin_inset Formula $f$
+\end_inset
+
+ offspring.
+ At the next stage of the life cycle individuals encounter stressors and
+ experience stressor-induced mortality.
+ We could model different kinds of stressors, but for the sake of simplicity
+ we will focus here on predation as a stressor.
+ Predation has attractive features, for example, not all encounters with
+ a predator are easy to anticipate and selection pressures resulting from
+ predation are strong.
+ To model predation, each patch is in one of two different states, 
+\begin_inset Formula $NP$
+\end_inset
+
+ (no predator present) and 
+\begin_inset Formula $P$
+\end_inset
+
+ (predator present).
+ 
+\end_layout
+
+\begin_layout Standard
+In a no-predator (NP) present patch, the only source of adult mortality
+ is background mortality which can differ between males and females reflecting
+ inherent differences in their demography 
+\begin_inset Formula $\mu_{\mathrm{f},\mathrm{background}}$
+\end_inset
+
+ and 
+\begin_inset Formula $\mu_{\mathrm{m},\mathrm{background}}$
+\end_inset
+
+ (this is not true: we need to incorporate costs of the stress hormone).
+ In a predator present patch, adults can die due to a multiplicative effect
+ of background mortality and predator-induced mortality, where we assume
+ that each individual can be attacked by a predator at probability 
+\begin_inset Formula $q_{\mathrm{attack}}$
+\end_inset
+
+.
+ If attacked, adult males and females die with a stress-hormone dependent
+ probability of 
+\begin_inset Formula $\mu_{\mathrm{f}}\left(z_{\mathrm{f}}\right)$
+\end_inset
+
+ and 
+\begin_inset Formula $\mu_{\mathrm{m}}\left(z_{\mathrm{m}}\right)$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+Upon breeder mortality, native and immigrant newborns compete for the vacant
+ breeding positions.
+ After this, (TODO: we need to talk about the time at which patches change,
+ 
+\begin_inset Note Note
+status open
+
+\begin_layout Plain Layout
+candidate life cycle so far: individual gets born, disperses (or not), then
+ environment changes, then adult mortality kicks in based on the new environment
+, then individuals compete over breeding positions.
+\end_layout
+
+\end_inset
+
+).
+ Let 
+\begin_inset Formula $s_{P\rightarrow NP}$
+\end_inset
+
+ and 
+\begin_inset Formula $s_{NP\rightarrow P}$
+\end_inset
+
+ reflect the probabilities that the predator leaves the local patch and
+ arrives at the local patch respectively.
+ Consequently, the overall frequency of the predator-rich environment is
+ then given by 
+\begin_inset Formula $q_{P}=s_{NP\rightarrow P}/(s_{P\rightarrow NP}+s_{NP\rightarrow P})$
+\end_inset
+
+.
+ The expected number 
+\begin_inset Formula $w_{ix\rightarrow jy}$
+\end_inset
+
+ of offspring of sex 
+\begin_inset Formula $y$
+\end_inset
+
+ born from a parent of sex 
+\begin_inset Formula $x$
+\end_inset
+
+ on a type 
+\begin_inset Formula $i$
+\end_inset
+
+ patch and who establish themselves as breeders on a type 
+\begin_inset Formula $j$
+\end_inset
+
+ patch (where 
+\begin_inset Formula $i$
+\end_inset
+
+ and 
+\begin_inset Formula $j$
+\end_inset
+
+ are either 
+\begin_inset Formula $P$
+\end_inset
+
+ or 
+\begin_inset Formula $NP$
+\end_inset
+
+) is then given by
+\begin_inset Formula 
+\begin{align*}
+w_{P\mathrm{f}\rightarrow P\mathrm{f}} & =1-\mu_{\mathrm{f}}\left(z_{\mathrm{f}}^{\mathrm{foc},\mathrm{f}}\right)\\
+ & +\frac{v_{P\mathrm{f}}}{}\frac{1}{2}\left(1-d_{\mathrm{f}}\right)\left(1-s_{P\rightarrow NP}\right)\mu_{\mathrm{f}}\left(z_{\mathrm{f}}^{\mathrm{loc,f}},P\right)\\
+ & +\frac{1}{2}d_{\mathrm{f}}q_{P}\left(1-s_{P\rightarrow NP}\right)\mu_{\mathrm{f}}\left(z_{\mathrm{f}},P\right)\\
+ & +\frac{1}{2}d_{\mathrm{f}}\left(1-q_{\mathrm{P}}\right)s_{NP\rightarrow P}\mu_{\mathrm{f}}\left(z_{\mathrm{f}},P\right)\\
+w_{P\mathrm{f}\rightarrow NP\mathrm{f}} & =\frac{1}{2}\left(1-d_{\mathrm{f}}\right)s_{P\rightarrow NP}\mu_{\mathrm{f}}\left(z_{\mathrm{f}}^{\mathrm{loc,f}},NP\right)\\
+ & +\frac{1}{2}d_{\mathrm{f}}\left(1-q_{P}\right)\left(1-s_{NP\rightarrow P}\right)\mu_{\mathrm{f}}\left(z_{\mathrm{f}},NP\right)\\
+ & +\frac{1}{2}d_{\mathrm{f}}q_{P}s_{P\rightarrow NP}\mu_{\mathrm{f}}\left(z_{\mathrm{f}},NP\right)
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Buffering vs Social Transmission
+\end_layout
+
+\begin_layout Standard
+In terms of buffering, what could we do? 
+\end_layout
+
+\begin_layout Standard
+Bram (stupidly) thinks that buffering might already be somehow baked in,
+ into the model.
+ The reason: in small groups, higher relatedness but higher local competition
+ as well.
+ Consequently, in dying (i.e., having lower levels of stress hormone, hence
+ less resistant to stressors, hence dying early) an individual clears the
+ way for relatives.
+ Whereas in larger groups, lower relatedness, hence more incentive to develop
+ stronger stress responses.
+ Hence this is a null model for stress reduction in social environments.
+ Assumes no communication about stress among individuals.
+ 
+\end_layout
+
+\begin_layout Standard
+Let's assume they /can/ communicate about stressors, so what would happen
+ then.
+ You could look at when and where they will inform others about the stressor,
+ dependent on local relatedness.
+ Maybe boy cries wolf dynamic (harming) here as well? Potential avenues
+ to habituation too.
+ 
+\end_layout
+
+\begin_layout Standard
+Think about reliability of social information.
+ 
+\end_layout
+
+\begin_layout Standard
+Things to do: 
+\end_layout
+
+\begin_layout Standard
+- What has been done about predator signaling in social groups theory wise.
+ 
+\end_layout
+
+\begin_layout Subsection
+Local attack dynamics
+\end_layout
+
+\begin_layout Standard
+A stressor only attacks on 
+\begin_inset Formula $P$
+\end_inset
+
+ patches (i.e., predator present).
+ There are different possible configurations: if a stressor would only attack
+ one individual per time step then there is less of an incentive for a social
+ signalling dynamic to emerge as the value of sharing information about
+ the stressor with others is reduced.
+ However, if the stressor attacks multiple individuals per time step then
+ clearly there is a potential incentive to share information.
+ 
+\end_layout
+
+\begin_layout Standard
+When a stressor attacks multiple individuals per time step on a 
+\begin_inset Formula $P$
+\end_inset
+
+ patch, then the expected number of attacked individuals is simply 
+\begin_inset Formula $\left(n_{\mathrm{f}}+n_{\mathrm{m}}\right)q_{\mathrm{attack}}$
+\end_inset
+
+.
+ Hence, an expected number of 
+\begin_inset Formula $\left(n_{\mathrm{f}}+n_{\mathrm{m}}\right)\left(1-q_{\mathrm{attack}}\right)$
+\end_inset
+
+ are not attacked, but may well be attacked in the next time step.
+ Moreover, a number of 
+\begin_inset Formula 
+\begin{align*}
+n_{\mathrm{survive}} & =\left\{ n_{\mathrm{f}}\left[1-\mu_{\mathrm{f}}\left(z_{\mathrm{f}}\right)\right]+n_{\mathrm{m}}\left[1-\mu_{\mathrm{m}}\left(z_{\mathrm{m}}\right)\right]\right\} q_{\mathrm{attack}}
+\end{align*}
+
+\end_inset
+
+ survive the attack and may then potentially inform 
+\begin_inset Formula $\left(n_{\mathrm{f}}+n_{\mathrm{m}}\right)\left(1-q_{\mathrm{attack}}\right)$
+\end_inset
+
+ other adults and the 
+\begin_inset Formula $n_{\mathrm{newborn}}=\left[n_{\mathrm{f}}\mu_{\mathrm{f}}\left(z_{\mathrm{f}}\right)+n_{\mathrm{m}}\mu_{\mathrm{m}}\left(z_{\mathrm{m}}\right)\right]q_{\mathrm{attack}}$
+\end_inset
+
+ newborn individuals that will replace those adults that have died due to
+ the stressor.
+ 
+\end_layout
+
+\begin_layout Standard
+Informing here implies sharing information about the presence of the predator.
+ Sharing such information could potentially be valuable if stressor occurrence
+ at a particular site is correlated over time.
+ 
+\end_layout
+
+\begin_layout Subsection
+Trade-offs
+\end_layout
+
+\begin_layout Standard
+Functional forms for cost of damage versus benefit of the stressor.
+\end_layout
+
+\begin_layout Subsection
+Signalling dynamic
+\end_layout
+
+\begin_layout Standard
+An individual can emit a signal after having encountered a stressor with
+ probability 
+\begin_inset Formula $s_{S}$
+\end_inset
+
+ or any other time with probability 
+\begin_inset Formula $s_{O}$
+\end_inset
+
+, while signals are withheld with respective probabilities 
+\begin_inset Formula $1-s_{S}$
+\end_inset
+
+ and 
+\begin_inset Formula $1-s_{O}$
+\end_inset
+
+.
+ This implies that an individual has direct information about it being attacked,
+ otherwise 
+\begin_inset Formula $s_{S}=s_{O}$
+\end_inset
+
+.
+ This would mean that individuals who simply 'see' the stressor at a distance
+ are not able to use 
+\begin_inset Formula $s_{S}$
+\end_inset
+
+, but have to rely on 
+\begin_inset Formula $s_{O}$
+\end_inset
+
+.
+ Moreover, this approach allows individuals to vary the honesty of a signal:
+ in case the individual uses 
+\begin_inset Formula $s_{O}$
+\end_inset
+
+, the signal gets less informative, as it is then used also in non-attack
+ contexts.
+\end_layout
+
+\begin_layout Standard
+Another configuration that we might consider is that individuals signal
+ dependent on their stress hormone level (rather than on being attacked
+ by the stressor), which would not involve direct information about stressor
+ occurrence.
+\end_layout
+
+\begin_layout Standard
+Individuals can then perceive these signals 
+\begin_inset Formula $s_{i}\in(s_{S},s_{O})$
+\end_inset
+
+ with two loci 
+\begin_inset Formula $q_{S}$
+\end_inset
+
+ (perception that there is a stressor upon receiving a signal) and 
+\begin_inset Formula $q_{NS}$
+\end_inset
+
+ (perception that there is a stressor upon not receiving a signal) and modulate
+ stress hormone levels accordingly.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{align*}
+\Pr\left(\text{individual perceives there is a stressor}\right) & =s_{i}q_{S}+\left(1-s_{i}\right)q_{NS}.
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Issues: this may not be the same as the game in 
+\begin_inset CommandInset citation
+LatexCommand citet
+key "Kuijper2018"
+literal "false"
+
+\end_inset
+
+ as there signals were necessarily patch-dependent, whereas here they are
+ context dependent.
+\end_layout
+
+\begin_layout Standard
+Have a look at models of vigilance and signalling of threats.
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset bibtex
+LatexCommand bibtex
+btprint "btPrintCited"
+bibfiles "../databases/transgenerational"
+options "bram"
+
+\end_inset
+
+
+\end_layout
+
+\end_body
+\end_document
