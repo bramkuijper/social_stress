@@ -49,6 +49,9 @@ void StressSocial::write_data()
 
 void StressSocial::predator_visit()
 {
+    double V; // auxiliary variable reflecting 
+              // whether at least a single individual is vigilant
+
     // 1. all patches that are of type P need to have a visit by a predator
     // 2. predator samples x individuals to attack 
     // 3. predator attacks them, so this changes an individuals' state
@@ -58,79 +61,81 @@ void StressSocial::predator_visit()
     {
         if (metapop_iter->predator_patch)
         {
-            // option 1: sample total number of individuals that will be attacked
-            // say, 3 individuals are being attacked. 
-            for (auto female_iter = metapop_iter->breeders[female].begin();
-                    female_iter < metapop_iter->breeders[female].end();
-                    ++female_iter)
+            // check whether at least one individual is vigilant
+            V = calculate_group_vigilance(metapop_iter);
+
+            // calculate the probability that nobody is vigilant
+            if (uniform(rng_r) < 1.0 - V)
             {
-                female_iter->is_attacked = uniform(rng_r) < param.p_attack;
-                // ther will be code here telling about 
-                // changes in hormone level or whatever
-            }
-            
-            for (auto male_iter = metapop_iter->breeders[male].begin();
-                    male_iter < metapop_iter->breeders[male].end();
-                    ++male_iter)
-            {
-                male_iter->is_attacked = uniform(rng_r) < param.p_attack;
-                // ther will be code here telling about 
-                // changes in hormone level or whatever
+                // then sample which individual will die
+                random_breeder_idx = take_random_breeder(rng_r);
+
+                // overwrite breeder at position with final breeder in stack
+                metapopulation.breeders[random_breeder_idx] = metapopulation.breeders.back();
+
+                // delete final element
+                metapopulation.breeders.pop_back();
             }
         }
     }
 } // end predator_visit()
 
-
-// probability of surviving an attack given hormone level h
-double StressSocial::attack_survival(double const h)
+double StressSocial::calculate_group_vigilance(Patch const &current_patch)
 {
-    return(a_h * std::pow(h / hormone_max), b_h);
-}
+    double prod_1minusv = 1.0;
+    // go over all patches and calculate vigilance
+    for (auto breeder_iter = current_patch.breeders.begin();
+            breeder_iter != current_patch.breeders.end();
+            ++breeder_iter)
+    {
+        prod_1minusv = prod_1minusv * (1.0 - breeder_iter->v);
+    }
 
-void StressSocial::survival()
+    // return 1 - (1-v)^n
+    return 1.0 - prod_1minusv;
+} // end calculate_group_vigilance()
+
+
+void StressSocial::reproduce()
 {
-    // aux variable containing the total mortality prob for an individual
-    double survival_prob;
 
+    // list of all the group level fecundities
+    std::vector <double> group_level_fecundities;
+
+    // auxiliary variable to calculate group level fecundity
+    double group_level_fecundity;
+
+    // calculate a mean fecundity distribution
     for (auto metapop_iter = metapopulation.begin();
             metapop_iter != metapopulation.end();
             ++metapop_iter)
     {
-        // first clear the list of previous survivors
-        metapop_iter->breeders_surviving[female].clear();
-        metapop_iter->breeders_surviving[male].clear();
+        group_level_fecundity = 0.0;
 
-         // have each and every individual survive dependent on 
-        // (i) whether it was attacked
-        // (ii) its baseline mortality and 
-        // (iii) the level of damage it has accumulated
-        //
-        for (auto female_iter = metapop_iter->breeders[female].begin();
-                female_iter < metapop_iter->breeders[female].end();
-                ++female_iter)
+        // calculate fecundity for each group
+        // dependent on individual vigilance values
+        for (auto breeder_iter = metapop_iter.breeders.begin();
+                breeder_iter != metapop_iter.breeders.end();
+                ++breeder_iter)
         {
 
-             survival_prob = 1.0;
-
-            if (female_iter.is_attacked)
-            {
-                survival_prob *= attack_survival(
-                        female_iter.stress_hormone[0] + 
-                        female_iter.stress_hormone[1]
-                        );
-            }
-
-            survival_prob *= param.max_survival;
-       
-            // TODO think about damage
-
-            // TODO this is where we stopped on March 7 2024 14:29
-            if (uniform(rng_r) < survival_prob)
-            {
-                metapop_iter->breeders_surviving[female].push_back(female_iter);
-            }
+            // calculate 1 - v^x
+            group_level_fecundity += 1.0 - std::pow(breeder_iter->v, par.fecundity_power)
         }
+
+        // add this value to the list of fecundities
+        group_level_fecundities.push_back(group_level_fecundity);
     }
-} // end survival()
+
+    // make a probability distribution
+    std::discrete_distribution<unsigned> group_level_fecundity_distribution(
+            group_level_fecundities.begin(), 
+            group_level_fecundities.end());
+
+    // TODO: let's park the use of the distribution for a while
+    // which patch are we going to use? 
+    unsigned patch_idx = group_level_fecundity_distribution(rng_r);
+
+
+} // end StressSocial::reproduce()
 

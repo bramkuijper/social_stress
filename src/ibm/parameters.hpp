@@ -33,6 +33,9 @@ class Parameters
 
         double p_attack{0.1};
 
+        // power of how fecundity decreases with vigilance
+        double fecundity_power{1.0};
+
         // base name for the file
         std::string file_name{"sim_stress_social"};
 };
