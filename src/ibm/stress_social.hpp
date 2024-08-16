@@ -43,10 +43,9 @@ class StressSocial
         void initialize_patches();
         void predator_visit();
         void switch_predator_status();
+        void calculate_group_vigilance();
 
-        void survive(); 
         void reproduce(); 
-
 
         // functions for data output
         std::ofstream data_file;
