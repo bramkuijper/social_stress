@@ -60,5 +60,4 @@ class StressSocial
 
 };
 
-
 #endif

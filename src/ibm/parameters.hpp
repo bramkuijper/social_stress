@@ -29,7 +29,12 @@ class Parameters
 
         unsigned max_time{3};
 
+        // switch rates between predator present in patch
+        // vs absent
         double s[2]{0.5,0.5};
+
+        // attack probability in a patch where a predator
+        // is present
 
         double p_attack{0.1};
 

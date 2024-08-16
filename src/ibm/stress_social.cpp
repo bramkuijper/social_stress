@@ -16,7 +16,6 @@ StressSocial::StressSocial(Parameters const &parvals) :
     // make some patches P and some NP
     initialize_patches();
 
-
     // now run the bloody thing
     for (time_step = 0; time_step < param.max_time; ++time_step)
     {
@@ -25,8 +24,9 @@ StressSocial::StressSocial(Parameters const &parvals) :
         // and to attack individuals there.
         predator_visit();
         survival();
+        reproduce();
     }
-}
+} // end StressSocial constructor
 
 // go over all the patches and initialize them as type NP or P
 void StressSocial::initialize_patches()
@@ -46,40 +46,6 @@ void StressSocial::write_data()
 {
     data_file << time_step << std::endl;
 }
-
-void StressSocial::predator_visit()
-{
-    // 1. all patches that are of type P need to have a visit by a predator
-    // 2. predator samples x individuals to attack 
-    // 3. predator attacks them, so this changes an individuals' state
-    for (auto metapop_iter = metapopulation.begin();
-            metapop_iter != metapopulation.end();
-            ++metapop_iter)
-    {
-        if (metapop_iter->predator_patch)
-        {
-            // option 1: sample total number of individuals that will be attacked
-            // say, 3 individuals are being attacked. 
-            for (auto female_iter = metapop_iter->breeders[female].begin();
-                    female_iter < metapop_iter->breeders[female].end();
-                    ++female_iter)
-            {
-                female_iter->is_attacked = uniform(rng_r) < param.p_attack;
-                // ther will be code here telling about 
-                // changes in hormone level or whatever
-            }
-            
-            for (auto male_iter = metapop_iter->breeders[male].begin();
-                    male_iter < metapop_iter->breeders[male].end();
-                    ++male_iter)
-            {
-                male_iter->is_attacked = uniform(rng_r) < param.p_attack;
-                // ther will be code here telling about 
-                // changes in hormone level or whatever
-            }
-        }
-    }
-} // end predator_visit()
 
 
 // probability of surviving an attack given hormone level h
