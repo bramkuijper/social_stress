@@ -41,11 +41,17 @@ class Parameters
         // power of how fecundity decreases with vigilance
         double fecundity_power{1.0};
 
+        double hmin{0.0};
         double hmax{10.0};
         double survival_power{1.0};
 
         // base name for the file
         std::string file_name{"sim_stress_social"};
+
+        // mutation rates
+        double mu_h{0.01};
+        double mu_v{0.01};
+        double sdmu{0.01};
 };
 
 #endif

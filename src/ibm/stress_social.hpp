@@ -45,7 +45,10 @@ class StressSocial
         void switch_predator_status();
         void calculate_group_vigilance();
 
+        // life history functions
+        void survive_damage_vigilance();
         void reproduce(); 
+        void update_damage();
 
         // functions for data output
         std::ofstream data_file;

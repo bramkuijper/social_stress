@@ -11,9 +11,9 @@ class Patch
     public:
         bool predator_patch{false};
 
-        std::vector <Individual> breeders[2];
+        std::vector <Individual> breeders;
 
-        std::vector <Individual> breeders_surviving[2];
+        std::vector <Individual> breeders_surviving;
 
         Patch();
 

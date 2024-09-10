@@ -24,9 +24,11 @@ StressSocial::StressSocial(Parameters const &parvals) :
         // and to attack individuals there.
         predator_visit();
         
-        survive_damage();
+        survive_damage_vigilance();
 
         reproduce();
+
+        update_damage();
     }
 } // end StressSocial constructor
 
@@ -120,9 +122,11 @@ double StressSocial::calculate_group_vigilance(Patch const &current_patch)
 
 
 // calculate how damage affects survival
-// TODO: we need to update damage levels each and every generation
+// TODO: we need to update damage levels each and every timestep
 void StressSocial::survive_damage_vigilance()
 {
+    double d,v;
+
     for (auto metapop_iter = metapopulation.begin();
             metapop_iter != metapopulation.end();
             ++metapop_iter)
@@ -133,6 +137,7 @@ void StressSocial::survive_damage_vigilance()
                 breeder_idx < metapop_iter->breeders.size();
                 ++breeder_idx)
         {
+            // TODO check compiler warning if you use += instead of =
             d = metapop_iter->breeders[breeder_idx].d;
             v = metapop_iter->breeders[breeder_idx].v;
 
@@ -174,13 +179,13 @@ void StressSocial::reproduce()
 
         // calculate fecundity for each group
         // dependent on individual vigilance values
-        for (auto breeder_iter = metapop_iter.breeders.begin();
-                breeder_iter != metapop_iter.breeders.end();
+        for (auto breeder_iter = metapop_iter->breeders.begin();
+                breeder_iter != metapop_iter->breeders.end();
                 ++breeder_iter)
         {
 
             // calculate 1 - v^x
-            group_level_fecundity += 1.0 - std::pow(breeder_iter->v, par.fecundity_power)
+            group_level_fecundity += 1.0 - std::pow(breeder_iter->v, param.fecundity_power);
         }
 
         // add this value to the list of fecundities
@@ -199,3 +204,8 @@ void StressSocial::reproduce()
 
 } // end StressSocial::reproduce()
 
+// updates damage each time step
+void StressSocial::update_damage()
+{
+
+}
