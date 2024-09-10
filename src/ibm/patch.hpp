@@ -15,7 +15,7 @@ class Patch
 
         std::vector <Individual> breeders_surviving[2];
 
-        Patch();
+        Patch(); // Declaration of default constructor patch
 
 
 };
