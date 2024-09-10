@@ -4,19 +4,19 @@
 
 // constructor function
 StressSocial::StressSocial(Parameters const &parvals) :
-    param{parvals}
+    param{parvals}  // Random number generator initialisation 
     ,rd{} // initialize random device
     ,seed{rd()} // initialize seed
     ,rng_r{seed} // initialize the random number generator
     ,uniform{0.0,1.0} // initialize the uniform dist between 0 and 1
     ,patch_sampler{0, param.npatches - 1} // initialize uniform distribution to sample patch indices from
     ,metapopulation(param.npatches, Patch()) // initialize the metapopulation
-    ,data_file{param.file_name}
+    ,data_file{param.file_name} // File where output is written
 {
     // make some patches P and some NP
     initialize_patches();
 
-    // now run the bloody thing
+    // now run the thing
     for (time_step = 0; time_step < param.max_time; ++time_step)
     {
         // do something!
@@ -35,14 +35,14 @@ StressSocial::StressSocial(Parameters const &parvals) :
 // go over all the patches and initialize them as type NP or P
 void StressSocial::initialize_patches()
 {
-    // calculate probability of encountering a predator on a patch
+    // calculate probability of encountering a predator on a patch using switch rates
     double prob_P = param.s[NP] / (param.s[NP] + param.s[P]);
 
     for (auto patch_iterator = metapopulation.begin();
             patch_iterator != metapopulation.end();
             ++patch_iterator)
     {
-        patch_iterator->predator_patch = uniform(rng_r) < prob_P;
+        patch_iterator->predator_patch = uniform(rng_r) < prob_P; // If draw number lower than prob_P, then P = TRUE
     }
 }
 
