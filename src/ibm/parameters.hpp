@@ -20,10 +20,10 @@ class Parameters
 {
     public:
         // first element female, second element male
-        int n[2]{5,5};
+        int n{20};
 
         // dispersal
-        double d[2]{0.1,0.9};
+        double d{0.1};
 
         int npatches{100}; 
 
@@ -41,9 +41,17 @@ class Parameters
         // power of how fecundity decreases with vigilance
         double fecundity_power{1.0};
 
+        // min max hormone
         double hmin{0.0};
         double hmax{10.0};
+
+        // max damage level
+        double dmax{10.0};
+
         double survival_power{1.0};
+
+        double init_v{0.0};
+        double init_stress_hormone_level{0.0};
 
         // base name for the file
         std::string file_name{"sim_stress_social"};
@@ -52,6 +60,11 @@ class Parameters
         double mu_h{0.01};
         double mu_v{0.01};
         double sdmu{0.01};
+
+        // mortality rates 
+        double m0{0.1};
+        double md{1.0}; // weighting of damage-related mortality
+        double mv{1.0}; // weighting of vigilance-investment-related mortality
 };
 
 #endif

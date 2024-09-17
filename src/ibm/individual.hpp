@@ -10,7 +10,9 @@ class Individual
 
     public:
         bool is_attacked{false};
-        double stress_hormone[2]{0.0,0.0}; // stress hormone
+        double baseline_influx[2]{0.0,0.0}; // stress hormone
+        double stress_influx[2]{0.0,0.0}; // stress hormone
+        double removal[2]{0.0,0.0}; // stress hormone
         double damage{0.0};
         double v[2]{0.0,0.0}; // vigilance
 

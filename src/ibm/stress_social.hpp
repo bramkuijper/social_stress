@@ -34,7 +34,10 @@ class StressSocial
         std::uniform_real_distribution<double> uniform;
 
         // uniform distribution to get random patch
-        std::uniform_int_distribution<int> patch_sampler;
+        std::uniform_int_distribution<unsigned> patch_sampler;
+
+        // uniform distribution to sample breeders from patch
+        std::uniform_int_distribution<unsigned> take_random_breeder;
         
         // a metapopulation of patches containing individuals
         std::vector <Patch> metapopulation;
@@ -43,12 +46,19 @@ class StressSocial
         void initialize_patches();
         void predator_visit();
         void switch_predator_status();
-        void calculate_group_vigilance();
+
+        double calculate_group_vigilance(Patch const &current_patch);
+        double attack_survival(double const h);
 
         // life history functions
         void survive_damage_vigilance();
         void reproduce(); 
         void update_damage();
+
+        // damage and vigilance-investment 
+        // related mortality
+        double mu(double const damage, 
+                double const vigilance);
 
         // functions for data output
         std::ofstream data_file;

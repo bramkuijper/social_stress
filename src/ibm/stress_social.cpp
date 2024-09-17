@@ -10,6 +10,7 @@ StressSocial::StressSocial(Parameters const &parvals) :
     ,rng_r{seed} // initialize the random number generator
     ,uniform{0.0,1.0} // initialize the uniform dist between 0 and 1
     ,patch_sampler{0, param.npatches - 1} // initialize uniform distribution to sample patch indices from
+    ,take_random_breeder{0, param.n - 1} // initialize uniform distribution to sample patch indices from
     ,metapopulation(param.npatches, Patch()) // initialize the metapopulation
     ,data_file{param.file_name} // File where output is written
 {
@@ -55,6 +56,8 @@ void StressSocial::predator_visit()
 {
     double V; // auxiliary variable reflecting 
               // whether at least a single individual is vigilant
+              //
+    unsigned random_breeder_idx;
 
     // 1. all patches that are of type P need to have a visit by a predator
     // 2. predator samples x individuals to attack 
@@ -77,6 +80,7 @@ void StressSocial::predator_visit()
 
                 // we need to implement that individuals can flee the attack 
                 // dependent on their stress hormone level h
+                // TODO implement patch and implement stress hormone dynamci
                 if (uniform(rng_r) < 1.0 - attack_survival(metapop_iter->breeders[random_breeder_idx].h))
                 {
                     // overwrite breeder at position with final breeder in stack
@@ -97,6 +101,8 @@ double StressSocial::attack_survival(double const h)
     return(pow(h/param.hmax, param.survival_power));
 }
 
+// go over all patches and calculate the total probability
+// that none of the individuals are vigilant
 double StressSocial::calculate_group_vigilance(Patch const &current_patch)
 {
     double prob_none_vigilant = 1.0;
@@ -107,7 +113,7 @@ double StressSocial::calculate_group_vigilance(Patch const &current_patch)
             breeder_iter != current_patch.breeders.end();
             ++breeder_iter)
     {
-        prob_none_vigilant = prob_none_vigilant * (1.0 - breeder_iter->v);
+        prob_none_vigilant = prob_none_vigilant * (1.0 - breeder_iter->v[0] - breeder_iter->v[1]);
     }
 
     // ok, now the probability that none of the individuals 
@@ -138,9 +144,10 @@ void StressSocial::survive_damage_vigilance()
                 ++breeder_idx)
         {
             // TODO check compiler warning if you use += instead of =
-            d = metapop_iter->breeders[breeder_idx].d;
-            v = metapop_iter->breeders[breeder_idx].v;
+            d = metapop_iter->breeders[breeder_idx].damage;
+            v = metapop_iter->breeders[breeder_idx].v[0] + metapop_iter->breeders[breeder_idx].v[1];
 
+            // TODO think about mortality due to lack of vigilance
             // individual does not survive
             if (uniform(rng_r) < mu(d, v))
             {
@@ -158,7 +165,15 @@ void StressSocial::survive_damage_vigilance()
     }
 } // end survival_damage()
 
+// mortality due to baseline mortality, damage and investment in vigilance
+double StressSocial::mu(
+        double const damage,
+        double const vigilance)
+{
+    double mortality_prob{param.m0 + param.md * damage / param.dmax + param.mv * vigilance};
 
+    return(mortality_prob);
+}
 
 
 void StressSocial::reproduce()
@@ -185,7 +200,7 @@ void StressSocial::reproduce()
         {
 
             // calculate 1 - v^x
-            group_level_fecundity += 1.0 - std::pow(breeder_iter->v, param.fecundity_power);
+            group_level_fecundity += 1.0 - std::pow(breeder_iter->v[0] + breeder_iter->v[1], param.fecundity_power);
         }
 
         // add this value to the list of fecundities

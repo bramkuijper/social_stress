@@ -200,7 +200,7 @@ d_{t+1} & =\left(1-g\right)d_{t}+h\left(s_{t}-\theta_{s}\right)^{2}.
 Damage-related mortality + vigilance-related mortality
 \begin_inset Formula 
 \begin{align*}
-\mu\left(d_{t}\right) & =\mu_{0}+\mu_{d}\frac{d_{t}}{d_{\mathrm{max}}}+\mu_{v}\frac{v\left(s_{t}\right)}{v_{\mathrm{max}}}.
+m\left(d_{t}\right) & =m_{0}+m_{d}\frac{d_{t}}{d_{\mathrm{max}}}+m_{v}\frac{v\left(s_{t}\right)}{v_{\mathrm{max}}}.
 \end{align*}
 
 \end_inset

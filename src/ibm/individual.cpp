@@ -4,7 +4,7 @@
 // main constructor
 Individual::Individual(Parameters const &params) :
     stress_hormone{params.init_stress_hormone_level/2, params.init_stress_hormone_level/2},
-    v{params.init_v/2, params.init_v/2},
+    v{params.init_v/2, params.init_v/2}
 {}
 
 // copy constructor
@@ -19,20 +19,21 @@ Individual::Individual(Individual const &other) :
 Individual::Individual(Individual const &mum,
                 Individual const &dad,
                 Parameters const &param,
-                std::mt19937 &rng_r) :
+                std::mt19937 &rng_r) 
 {
     std::bernoulli_distribution segregator{0.5};
 
-    stress_hormone[0] = mutate(mum.stress_hormone[segregator(rng_r)], param.mu_h, param.sdmu);
+    stress_hormone[0] = mutate(mum.stress_hormone[segregator(rng_r)], param.mu_h, param.sdmu, rng_r);
     stress_hormone[0] = std::clamp(stress_hormone[0], param.hmin, param.hmax);
 
-    stress_hormone[1] = mutate(dad.stress_hormone[segregator(rng_r)], param.mu_h, param.sdmu);
+    stress_hormone[1] = mutate(dad.stress_hormone[segregator(rng_r)], param.mu_h, param.sdmu, rng_r);
     stress_hormone[1] = std::clamp(stress_hormone[1], param.hmin, param.hmax);
 
-    v[0] = mutate(mum.v[segregator(rng_r)], param.mu_v, param.sdmu);
-    v[0] = std::clamp(v[0], 0, 1.0);
-    v[1] = mutate(dad.v[segregator(rng_r)], param.mu_v, param.sdmu);
-    v[1] = std::clamp(v[1], 0, 1.0);
+    // mutate the first vigilance allele
+    v[0] = mutate(mum.v[segregator(rng_r)], param.mu_v, param.sdmu, rng_r);
+    v[0] = std::clamp(v[0], 0.0, 1.0);
+    v[1] = mutate(dad.v[segregator(rng_r)], param.mu_v, param.sdmu, rng_r);
+    v[1] = std::clamp(v[1], 0.0, 1.0);
 
 } // birth constructor
   
