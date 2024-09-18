@@ -1,3 +1,4 @@
+#include <cassert>
 #include "stress_social.hpp"
 
 int main(int argc, char **argv)

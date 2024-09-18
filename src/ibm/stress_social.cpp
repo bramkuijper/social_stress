@@ -11,7 +11,7 @@ StressSocial::StressSocial(Parameters const &parvals) :
     ,uniform{0.0,1.0} // initialize the uniform dist between 0 and 1
     ,patch_sampler{0, param.npatches - 1} // initialize uniform distribution to sample patch indices from
     ,take_random_breeder{0, param.n - 1} // initialize uniform distribution to sample patch indices from
-    ,metapopulation(param.npatches, Patch()) // initialize the metapopulation
+    ,metapopulation(param.npatches, Patch(param)) // initialize the metapopulation
     ,data_file{param.file_name} // File where output is written
 {
     // make some patches P and some NP
@@ -28,6 +28,8 @@ StressSocial::StressSocial(Parameters const &parvals) :
         survive_damage_vigilance();
 
         reproduce();
+
+        update_stress_hormone();
 
         update_damage();
     }
@@ -78,9 +80,11 @@ void StressSocial::predator_visit()
                 // then sample which individual will die
                 random_breeder_idx = take_random_breeder(rng_r);
 
+                metapop_iter->breeders[random_breeder_idx].is_attacked <- true;
+
                 // we need to implement that individuals can flee the attack 
                 // dependent on their stress hormone level h
-                // TODO implement patch and implement stress hormone dynamic
+                // TODO mplement stress hormone dynamic
                 if (uniform(rng_r) < 1.0 - attack_survival(metapop_iter->breeders[random_breeder_idx].stress_hormone))
                 {
                     // overwrite breeder at position with final breeder in stack
@@ -90,6 +94,9 @@ void StressSocial::predator_visit()
                     metapop_iter->breeders.pop_back();
                 }
             }
+
+            // then store V in the patch object
+            metapop_iter->V = V;
         }
     }
 } // end predator_visit()
@@ -218,6 +225,36 @@ void StressSocial::reproduce()
 
 
 } // end StressSocial::reproduce()
+
+void StressSocial::update_stress_hormone()
+{
+    double stress_hormone_tplus1,r, stress_influx, vigilance_influx, baseline_influx;
+    // calculate a mean fecundity distribution
+    for (auto metapop_iter = metapopulation.begin();
+            metapop_iter != metapopulation.end();
+            ++metapop_iter)
+    {
+        // calculate fecundity for each group
+        // dependent on individual vigilance values
+        for (auto breeder_iter = metapop_iter->breeders.begin();
+                breeder_iter != metapop_iter->breeders.end();
+                ++breeder_iter)
+        {
+            r = breeder_iter->removal[0] + breeder_iter->removal[1];
+            baseline_influx = breeder_iter->baseline_influx[0] + breeder_iter->baseline_influx[1];
+            stress_influx = breeder_iter->stress_influx[0] + breeder_iter->stress_influx[1];
+            vigilance_influx = breeder_iter->vigilance_influx[0] + breeder_iter->vigilance_influx[1];
+
+            stress_hormone_tplus1 = (1.0 - r) * breeder_iter->stress_hormone + 
+                baseline_influx +
+                breeder_iter->is_attacked * stress_influx + 
+                vigilance_influx * metapop_iter->V;
+
+            // undo the is_attacked variable, ready for the next time step
+            breeder_iter->is_attacked = false;
+        }
+    }
+} // update_stress_hormone()
 
 // updates damage each time step
 void StressSocial::update_damage()
