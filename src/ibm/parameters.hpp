@@ -20,12 +20,12 @@ class Parameters
 {
     public:
         // first element female, second element male
-        int n{20};
+        unsigned n{20};
 
         // dispersal
         double d{0.1};
 
-        int npatches{100}; 
+        unsigned npatches{100}; 
 
         unsigned max_time{3};
 
@@ -57,7 +57,10 @@ class Parameters
         std::string file_name{"sim_stress_social"};
 
         // mutation rates
-        double mu_h{0.01};
+        double mu_baseline{0.01};
+        double mu_stress_influx{0.01};
+        double mu_vigilance_influx{0.01};
+        double mu_removal{0.01};
         double mu_v{0.01};
         double sdmu{0.01};
 

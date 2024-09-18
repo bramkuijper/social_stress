@@ -10,11 +10,15 @@ class Individual
 
     public:
         bool is_attacked{false};
-        double baseline_influx[2]{0.0,0.0}; // stress hormone
-        double stress_influx[2]{0.0,0.0}; // stress hormone
-        double removal[2]{0.0,0.0}; // stress hormone
-        double damage{0.0};
+        double baseline_influx[2]{0.0,0.0}; 
+        double stress_influx[2]{0.0,0.0}; 
+        double vigilance_influx[2]{0.0,0.0}; 
+        double removal[2]{0.0,0.0}; 
         double v[2]{0.0,0.0}; // vigilance
+
+        // state variables
+        double damage{0.0}; // 
+        double stress_hormone{0.0}; // how much stress hormone does an individual have now
 
         // constructor
         Individual(Parameters const &params);

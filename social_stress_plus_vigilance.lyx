@@ -133,6 +133,28 @@ s_{t+1} & =(1-r)s_{t}+z_{\mathrm{baseline}}+\delta_{\mathrm{attack}}z_{\mathrm{i
 \end_layout
 
 \begin_layout Standard
+What would be an individual's initial state 
+\begin_inset Formula $s_{0}$
+\end_inset
+
+ of the stress hormone.
+ Different options possible,
+ but for sake of tractability,
+ lets consider that it is the equilibrium value at the start of one's life:
+\begin_inset Formula 
+\begin{align*}
+s_{0} & =\left(1-r\right)s_{0}+z_{\mathrm{baseline}}\\
+s_{0}-1\cdot s_{0}+rs_{0} & =z_{\mathrm{baseline}}\\
+rs_{0} & =z_{\mathrm{baseline}}\\
+s_{0} & =z_{\mathrm{baseline}}/r
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
 We have two patches,
  predator present and predator absent,
  where switch rates between predator present 

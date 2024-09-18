@@ -70,7 +70,7 @@ void StressSocial::predator_visit()
         if (metapop_iter->predator_patch)
         {
             // check whether at least one individual is vigilant
-            V = calculate_group_vigilance(metapop_iter);
+            V = calculate_group_vigilance(*metapop_iter);
 
             // calculate the probability that nobody is vigilant
             if (uniform(rng_r) < 1.0 - V)
@@ -80,8 +80,8 @@ void StressSocial::predator_visit()
 
                 // we need to implement that individuals can flee the attack 
                 // dependent on their stress hormone level h
-                // TODO implement patch and implement stress hormone dynamci
-                if (uniform(rng_r) < 1.0 - attack_survival(metapop_iter->breeders[random_breeder_idx].h))
+                // TODO implement patch and implement stress hormone dynamic
+                if (uniform(rng_r) < 1.0 - attack_survival(metapop_iter->breeders[random_breeder_idx].stress_hormone))
                 {
                     // overwrite breeder at position with final breeder in stack
                     metapop_iter->breeders[random_breeder_idx] = metapop_iter->breeders.back();
