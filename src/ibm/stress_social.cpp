@@ -54,6 +54,9 @@ void StressSocial::write_data()
     data_file << time_step << std::endl;
 }
 
+
+
+
 void StressSocial::predator_visit()
 {
     double V; // auxiliary variable reflecting 
@@ -226,6 +229,32 @@ void StressSocial::reproduce()
 
 } // end StressSocial::reproduce()
 
+// write parameters to file
+void StressSocial::write_parameters(std::ofstream &data_file) 
+{
+    data_file << endl
+        << endl
+        << "seed;" << seed << ";" << endl
+        << "time_step;" << time_step << ";" << endl
+        << "dispersal;" << param.d << ";" << endl
+        << "npatches;" << param.npatches << ";" << endl
+        << "s;" << param.s << ";" << endl
+        << "p_attack;" << param.p_attack << ";" << endl
+        << "fecundity_power;" << param.fecundity_power << ";" << endl
+        << "hmin;" << param.hmin << ";" << endl
+        << "hmax;" << param.hmax << ";" << endl
+        << "dmax;" << param.dmax << ";" << endl
+        << "survival_power;" << param.survival_power << ";" << endl
+        << "init_v;" << param.init_v << ";" << endl
+        << "init_stress_hormone_level;" << param.init_stress_hormone_level << ";" << endl
+        << "mu_baseline;" << param.mu_baseline << ";" << endl
+        << "mu_stress_influx;" << param.mu_stress_influx << ";" << endl
+        << "mu_vigilance_influx;" << param.mu_vigilance_influx << ";" << endl
+        << "mu_removal;" << param.mu_removal << ";" << endl
+        << "mu_v;" << param.mu_v << ";" << endl
+        << "base_name;" << param.base_name << ";" << endl;
+}
+
 void StressSocial::update_stress_hormone()
 {
     double stress_hormone_tplus1,r, stress_influx, vigilance_influx, baseline_influx;
@@ -261,3 +290,4 @@ void StressSocial::update_damage()
 {
 
 }
+

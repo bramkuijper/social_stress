@@ -63,7 +63,8 @@ class StressSocial
 
         // functions for data output
         std::ofstream data_file;
-
+        // NOTE: Not sure if this needs including twice?
+        void write_parameters(std::ofstream &data_file);
         void write_parameters();
         void write_data_headers();
         void write_data();
