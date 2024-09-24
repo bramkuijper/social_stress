@@ -68,6 +68,11 @@ class Parameters
         double m0{0.1};
         double md{1.0}; // weighting of damage-related mortality
         double mv{1.0}; // weighting of vigilance-investment-related mortality
+        
+        // damage-related things
+        double g{0.1}; // removal of damage per timestep
+        double k{0.1}; // increase in damage due to hormone != optimum
+        double theta_hormone{1}; // optimal hormone level
 };
 
 #endif

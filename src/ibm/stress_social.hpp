@@ -54,7 +54,6 @@ class StressSocial
         // life history functions
         void survive_damage_vigilance();
         void reproduce(); 
-        void update_damage();
 
         // damage and vigilance-investment 
         // related mortality
@@ -68,6 +67,7 @@ class StressSocial
         void write_parameters();
         void write_data_headers();
         void write_data();
+        void write_distribution();
 
     public:
         StressSocial(Parameters const &param);

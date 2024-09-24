@@ -9,6 +9,7 @@ class Individual
     private:
 
     public:
+        bool is_alive{true};
         bool is_attacked{false};
         double baseline_influx[2]{0.0,0.0}; 
         double stress_influx[2]{0.0,0.0}; 

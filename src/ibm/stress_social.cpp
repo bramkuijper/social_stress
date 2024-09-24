@@ -30,8 +30,6 @@ StressSocial::StressSocial(Parameters const &parvals) :
         reproduce();
 
         update_stress_hormone();
-
-        update_damage();
     }
 } // end StressSocial constructor
 
@@ -47,6 +45,14 @@ void StressSocial::initialize_patches()
     {
         patch_iterator->predator_patch = uniform(rng_r) < prob_P; // If draw number lower than prob_P, then P = TRUE
     }
+}
+
+// print out the distribution of all the individuals
+void StressSocial::write_distribution()
+{
+    std::ofstream data_file2{param.file_name + "_distribution"};
+
+    // print out all the values of all the individuals
 }
 
 // means and the variances of the various traits
@@ -90,19 +96,11 @@ void StressSocial::predator_visit()
                 // then sample which individual will die
                 random_breeder_idx = take_random_breeder(rng_r);
 
-                metapop_iter->breeders[random_breeder_idx].is_attacked <- true;
+                metapop_iter->breeders[random_breeder_idx].is_attacked = true;
 
                 // we need to implement that individuals can flee the attack 
                 // dependent on their stress hormone level h
-                // TODO mplement stress hormone dynamic
-                if (uniform(rng_r) < 1.0 - attack_survival(metapop_iter->breeders[random_breeder_idx].stress_hormone))
-                {
-                    // overwrite breeder at position with final breeder in stack
-                    metapop_iter->breeders[random_breeder_idx] = metapop_iter->breeders.back();
-
-                    // delete final element
-                    metapop_iter->breeders.pop_back();
-                }
+                metapop_iter->breeders[random_breeder_idx].is_alive = uniform(rng_r) < attack_survival(metapop_iter->breeders[random_breeder_idx].stress_hormone);
             }
 
             // then store V in the patch object
@@ -145,7 +143,6 @@ double StressSocial::calculate_group_vigilance(Patch const &current_patch)
 
 
 // calculate how damage affects survival
-// TODO: we need to update damage levels each and every timestep
 void StressSocial::survive_damage_vigilance()
 {
     double d,v;
@@ -160,24 +157,13 @@ void StressSocial::survive_damage_vigilance()
                 breeder_idx < metapop_iter->breeders.size();
                 ++breeder_idx)
         {
-            // TODO check compiler warning if you use += instead of =
             d = metapop_iter->breeders[breeder_idx].damage;
             v = metapop_iter->breeders[breeder_idx].v[0] + metapop_iter->breeders[breeder_idx].v[1];
 
-            // TODO think about mortality due to lack of vigilance
+            // note that mortality due to lack of vigilance
+            // is elsewhere, namely in predator_visit()
             // individual does not survive
-            if (uniform(rng_r) < mu(d, v))
-            {
-                metapop_iter->breeders[breeder_idx] = metapop_iter->breeders.back();
-
-                metapop_iter->breeders.pop_back();
-
-                // reduce index by 1
-                // to now evaluate the survival of the individual at the back
-                // of the stack that was copied to its new position at the 
-                // middle of the stack.
-                --breeder_idx;
-            }
+            metapop_iter->breeders[breeder_idx].is_alive = uniform(rng_r) < 1.0 - mu(d, v);
         }
     }
 } // end survival_damage()
@@ -195,19 +181,27 @@ double StressSocial::mu(
 
 void StressSocial::reproduce()
 {
-
     // list of all the group level fecundities
     std::vector <double> group_level_fecundities;
 
+    // list of all the fecundities across all breeders of a single patch
+    std::vector <double> individual_level_fecundities;
+
     // auxiliary variable to calculate group level fecundity
-    double group_level_fecundity;
+    double group_level_fecundity, individual_fecundity;
 
     // calculate a mean fecundity distribution
     for (auto metapop_iter = metapopulation.begin();
             metapop_iter != metapopulation.end();
             ++metapop_iter)
     {
+        // reset the group level total fecundity
+        // as we start with a new patch
         group_level_fecundity = 0.0;
+
+        // reset the vector with individual level fecundities
+        // as we start with a new patch
+        individual_level_fecundities.clear();
 
         // calculate fecundity for each group
         // dependent on individual vigilance values
@@ -215,16 +209,30 @@ void StressSocial::reproduce()
                 breeder_iter != metapop_iter->breeders.end();
                 ++breeder_iter)
         {
-
             // calculate 1 - v^x
-            group_level_fecundity += 1.0 - std::pow(breeder_iter->v[0] + breeder_iter->v[1], param.fecundity_power);
+            individual_fecundity = 1.0 - std::pow(breeder_iter->v[0] + breeder_iter->v[1], param.fecundity_power);
+
+            individual_level_fecundities.push_back(individual_fecundity);
+
+            group_level_fecundity += individual_fecundity;
         }
 
-        // add this value to the list of fecundities
+        // param object to update the current fecundity distribution
+        std::discrete_distribution<unsigned>::param_type 
+            fecundity_distribution_param(
+                    individual_level_fecundities.begin()
+                    ,individual_level_fecundities.end());
+
+        // update the patch's discrete distribution of fecundities
+        // with this param_type object we just made
+        within_patch_fecundity_distribution.param(
+                fecundity_distribution_param);
+
+        // add the total fecundity value to the list of group-level fecundities
         group_level_fecundities.push_back(group_level_fecundity);
     }
 
-    // make a probability distribution
+    // make a probability distribution of the patch level fecundities
     std::discrete_distribution<unsigned> group_level_fecundity_distribution(
             group_level_fecundities.begin(), 
             group_level_fecundities.end());
@@ -232,6 +240,14 @@ void StressSocial::reproduce()
     // TODO: let's park the use of the distribution for a while
     // which patch are we going to use? 
     unsigned patch_idx = group_level_fecundity_distribution(rng_r);
+
+
+    // tasks ahead:
+    // 1. go over all breeders
+    // 2. are they dead?
+    // 3. sample new offspring from distribution
+    // 4. replace dead breeder with new offspring.
+    // done
 
 
 } // end StressSocial::reproduce()
@@ -265,7 +281,8 @@ void StressSocial::write_parameters(std::ofstream &data_file)
 // update the stress hormone level for each individual
 void StressSocial::update_stress_hormone()
 {
-    double stress_hormone_tplus1,r, stress_influx, vigilance_influx, baseline_influx;
+    double stress_hormone_tplus1, stress_hormone, r, stress_influx, vigilance_influx, baseline_influx, damage,damage_tplus1;
+
     // calculate a mean fecundity distribution
     for (auto metapop_iter = metapopulation.begin();
             metapop_iter != metapopulation.end();
@@ -281,21 +298,23 @@ void StressSocial::update_stress_hormone()
             baseline_influx = breeder_iter->baseline_influx[0] + breeder_iter->baseline_influx[1];
             stress_influx = breeder_iter->stress_influx[0] + breeder_iter->stress_influx[1];
             vigilance_influx = breeder_iter->vigilance_influx[0] + breeder_iter->vigilance_influx[1];
+            damage = breeder_iter->damage;
+            stress_hormone = breeder_iter->stress_hormone;
 
-            stress_hormone_tplus1 = (1.0 - r) * breeder_iter->stress_hormone + 
+            stress_hormone_tplus1 = (1.0 - r) * stress_hormone + 
                 baseline_influx +
                 breeder_iter->is_attacked * stress_influx + 
                 vigilance_influx * metapop_iter->V;
 
+            // d(t+1) = (1-g)d + k(h - theta_h)^2
+            damage_tplus1 = (1.0 - param.g) * damage + param.k * (stress_hormone - param.theta_hormone) * (stress_hormone - param.theta_hormone);
+
             // undo the is_attacked variable, ready for the next time step
             breeder_iter->is_attacked = false;
+
+            breeder_iter->stress_hormone = stress_hormone_tplus1;
+            breeder_iter->damage = damage_tplus1;
         }
     }
 } // update_stress_hormone()
-
-// updates damage each time step
-void StressSocial::update_damage()
-{
-
-}
 

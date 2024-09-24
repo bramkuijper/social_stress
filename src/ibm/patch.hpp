@@ -2,6 +2,7 @@
 #define _PATCH_HPP
 
 #include <vector>
+#include <random>
 #include "individual.hpp"
 
 // TODO how are these breeders actually initialized
@@ -10,6 +11,8 @@ class Patch
 {
     public:
         bool predator_patch{false};
+
+        std::discrete_distribution<unsigned> within_patch_fecundity_distribution;
 
         double V{0.0}; // group-level vigilance
 

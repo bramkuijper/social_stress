@@ -10,6 +10,7 @@ Individual::Individual(Parameters const &params) :
 
 // copy constructor
 Individual::Individual(Individual const &other) :
+    is_alive{other.is_alive},
     is_attacked{other.is_attacked},
     baseline_influx{other.baseline_influx[0],other.baseline_influx[1]},
     stress_influx{other.stress_influx[0], other.stress_influx[1]},
@@ -27,8 +28,6 @@ Individual::Individual(Individual const &mum,
                 std::mt19937 &rng_r)
 {
     std::bernoulli_distribution segregator{0.5};
-
-    // TODO think about state variables 
 
     baseline_influx[0] = mutate(mum.baseline_influx[segregator(rng_r)], param.mu_baseline, param.sdmu, rng_r);
     baseline_influx[0] = std::clamp(baseline_influx[0], 0.0, param.hmax/2.0);
@@ -63,10 +62,13 @@ Individual::Individual(Individual const &mum,
     // updating the state variables
     stress_hormone = (baseline_influx[0] + baseline_influx[1])/(removal[0] + removal[1]);
 
+    // damage is 0 as per the default
+
 } // birth constructor
   
 void Individual::operator=(Individual const &other)
 {
+    is_alive = other.is_alive;
     is_attacked = other.is_attacked;
     damage = other.damage;
     stress_hormone = other.stress_hormone;
