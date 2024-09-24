@@ -49,8 +49,15 @@ void StressSocial::initialize_patches()
     }
 }
 
+// means and the variances of the various traits
+// both the genetic traits and also the non-genetic
+// traits. 
 void StressSocial::write_data() 
 {
+    // allocate variables that contain the means
+    // allocate variables that contain the sum of squares (for the variances)
+    // then calculate the variance as var(x) = sum_of_squares/n - mean(x) * mean(x)
+
     data_file << time_step << std::endl;
 }
 
@@ -252,9 +259,10 @@ void StressSocial::write_parameters(std::ofstream &data_file)
         << "mu_vigilance_influx;" << param.mu_vigilance_influx << ";" << std::endl
         << "mu_removal;" << param.mu_removal << ";" << std::endl
         << "mu_v;" << param.mu_v << ";" << std::endl
-        << "base_name;" << param.base_name << ";" << std::endl;
+        << "file_name;" << param.file_name << ";" << std::endl;
 }
 
+// update the stress hormone level for each individual
 void StressSocial::update_stress_hormone()
 {
     double stress_hormone_tplus1,r, stress_influx, vigilance_influx, baseline_influx;

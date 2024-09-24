@@ -8,7 +8,6 @@ int main(int argc, char **argv)
     pars.s[NP] = std::stod(argv[2]); // String to double
     pars.s[P] = std::stod(argv[3]);
     pars.npatches = std::stoi(argv[4]); // String to integer
-    pars.base_name = argv[5];
 
     StressSocial sim_object(pars);
 
