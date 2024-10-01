@@ -19,11 +19,14 @@ enum PatchType
 class Parameters
 {
     public:
+
+        unsigned data_output_interval{10};
+
         // first element female, second element male
         unsigned n{20};
 
         // dispersal
-        double d{0.1};
+        double p_mig{0.1};
 
         unsigned npatches{100}; 
 

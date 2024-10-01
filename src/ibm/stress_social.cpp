@@ -1,5 +1,6 @@
 // heart of the stress social code
 
+#include <cassert>
 #include "stress_social.hpp"
 
 // constructor function
@@ -14,6 +15,10 @@ StressSocial::StressSocial(Parameters const &parvals) :
     ,metapopulation(param.npatches, Patch(param)) // initialize the metapopulation
     ,data_file{param.file_name} // File where output is written
 {
+    write_parameters();
+
+    write_data_headers();
+
     // make some patches P and some NP
     initialize_patches();
 
@@ -30,7 +35,13 @@ StressSocial::StressSocial(Parameters const &parvals) :
         reproduce();
 
         update_stress_hormone();
+
+        if (time_step % param.data_output_interval == 0)
+        {
+            write_data();
+        }
     }
+
 } // end StressSocial constructor
 
 // go over all the patches and initialize them as type NP or P
@@ -53,6 +64,11 @@ void StressSocial::write_distribution()
     std::ofstream data_file2{param.file_name + "_distribution"};
 
     // print out all the values of all the individuals
+}
+
+void StressSocial::write_data_headers()
+{
+    data_file << "time" << std::endl;
 }
 
 // means and the variances of the various traits
@@ -100,7 +116,8 @@ void StressSocial::predator_visit()
 
                 // we need to implement that individuals can flee the attack 
                 // dependent on their stress hormone level h
-                metapop_iter->breeders[random_breeder_idx].is_alive = uniform(rng_r) < attack_survival(metapop_iter->breeders[random_breeder_idx].stress_hormone);
+                metapop_iter->breeders[random_breeder_idx].is_alive = 
+                    uniform(rng_r) < attack_survival(metapop_iter->breeders[random_breeder_idx].stress_hormone);
             }
 
             // then store V in the patch object
@@ -184,6 +201,9 @@ void StressSocial::reproduce()
     // list of all the group level fecundities
     std::vector <double> group_level_fecundities;
 
+    // total fecundity across all groups
+    double total_global_fecundity = 0.0;
+
     // list of all the fecundities across all breeders of a single patch
     std::vector <double> individual_level_fecundities;
 
@@ -217,7 +237,7 @@ void StressSocial::reproduce()
             group_level_fecundity += individual_fecundity;
         }
 
-        // param object to update the current fecundity distribution
+        // param object to update this patch's fecundity distribution
         std::discrete_distribution<unsigned>::param_type 
             fecundity_distribution_param(
                     individual_level_fecundities.begin()
@@ -225,7 +245,7 @@ void StressSocial::reproduce()
 
         // update the patch's discrete distribution of fecundities
         // with this param_type object we just made
-        within_patch_fecundity_distribution.param(
+        metapop_iter->within_patch_fecundity_distribution.param(
                 fecundity_distribution_param);
 
         // add the total fecundity value to the list of group-level fecundities
@@ -237,9 +257,9 @@ void StressSocial::reproduce()
             group_level_fecundities.begin(), 
             group_level_fecundities.end());
 
-    // TODO: let's park the use of the distribution for a while
-    // which patch are we going to use? 
-    unsigned patch_idx = group_level_fecundity_distribution(rng_r);
+    // variable holding the patch we will sample new offspring from
+    unsigned patch_producing_new_offspring_idx, mum_idx, dad_idx;
+    double probability_sample_immigrant, migrant_contribution, local_contribution, total_local_fecundity;
 
 
     // tasks ahead:
@@ -248,20 +268,88 @@ void StressSocial::reproduce()
     // 3. sample new offspring from distribution
     // 4. replace dead breeder with new offspring.
     // done
+    
+    // calculate a mean fecundity distribution
+    for (unsigned patch_idx = 0;
+            patch_idx < param.npatches;
+            ++patch_idx)
+    {
+        total_local_fecundity = group_level_fecundities[patch_idx];
 
+        migrant_contribution = param.p_mig * total_global_fecundity / param.npatches;
 
+        local_contribution = (1.0 - param.p_mig) * total_local_fecundity;
+
+        probability_sample_immigrant = migrant_contribution / (local_contribution + migrant_contribution);
+
+        // calculate fecundity for each group
+        // dependent on individual vigilance values
+        for (auto breeder_iter = metapopulation[patch_idx].breeders.begin();
+                breeder_iter != metapopulation[patch_idx].breeders.end();
+                ++breeder_iter)
+        {
+            if (!breeder_iter->is_alive) // individual dead, hence needs replacing
+            {
+                // get offspring from remote patch
+                if (uniform(rng_r) < probability_sample_immigrant)
+                {
+                    // sample remote patch
+                    patch_producing_new_offspring_idx = group_level_fecundity_distribution(rng_r);
+
+                    assert(patch_producing_new_offspring_idx < param.npatches);
+
+                } else // get offspring from local patch
+                {
+                    patch_producing_new_offspring_idx = patch_idx;
+                    
+                    assert(patch_producing_new_offspring_idx < param.npatches);
+                }
+
+                // we know the patch, now which parent
+                // first pick mom
+                mum_idx = metapopulation[
+                    patch_producing_new_offspring_idx].within_patch_fecundity_distribution(rng_r);
+
+                assert(mum_idx < param.n);
+
+                // pick dad
+                dad_idx = metapopulation[
+                    patch_producing_new_offspring_idx].within_patch_fecundity_distribution(rng_r);
+
+                assert(mum_idx < param.n);
+
+                // call birth constructor
+                Individual Kid(
+                        metapopulation[patch_producing_new_offspring_idx].breeders[mum_idx],
+                        metapopulation[patch_producing_new_offspring_idx].breeders[dad_idx],
+                        param,
+                        rng_r);
+
+                assert(Kid.v[0] >= 0);
+                assert(Kid.v[0] <= 1.0);
+
+                // fill the vacancy with new kid
+                *breeder_iter = Kid;
+                
+                assert(breeder_iter->v[0] >= 0);
+                assert(breeder_iter->v[0] <= 1.0);
+
+            } // end if breeder_iter is_alive
+        } // end for breeder_iter
+    } // end for patch_idx
 } // end StressSocial::reproduce()
 
 // write parameters to file
-void StressSocial::write_parameters(std::ofstream &data_file) 
+void StressSocial::write_parameters() 
 {
     data_file << std::endl
         << std::endl
         << "seed;" << seed << ";" << std::endl
         << "time_step;" << time_step << ";" << std::endl
-        << "dispersal;" << param.d << ";" << std::endl
+        << "dispersal;" << param.p_mig << ";" << std::endl
         << "npatches;" << param.npatches << ";" << std::endl
-        << "s;" << param.s << ";" << std::endl
+        << "s_np;" << param.s[NP] << ";" << std::endl
+        << "s_p;" << param.s[P] << ";" << std::endl
         << "p_attack;" << param.p_attack << ";" << std::endl
         << "fecundity_power;" << param.fecundity_power << ";" << std::endl
         << "hmin;" << param.hmin << ";" << std::endl
@@ -275,7 +363,9 @@ void StressSocial::write_parameters(std::ofstream &data_file)
         << "mu_vigilance_influx;" << param.mu_vigilance_influx << ";" << std::endl
         << "mu_removal;" << param.mu_removal << ";" << std::endl
         << "mu_v;" << param.mu_v << ";" << std::endl
-        << "file_name;" << param.file_name << ";" << std::endl;
+        << "file_name;" << param.file_name << ";" << std::endl 
+        << std::endl
+        << std::endl;
 }
 
 // update the stress hormone level for each individual

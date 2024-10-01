@@ -214,7 +214,7 @@ v\left(s_{t}\right) & =a_{v}+b_{\mathrm{stress\rightarrow vigilance}}s_{t}/s_{\m
 Damage 
 \begin_inset Formula 
 \begin{align*}
-d_{t+1} & =\left(1-g\right)d_{t}+h\left(s_{t}-\theta_{s}\right)^{2}.
+d_{t+1} & =\left(1-g\right)d_{t}+k\left(s_{t}-\theta_{s}\right)^{2}.
 \end{align*}
 
 \end_inset

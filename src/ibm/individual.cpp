@@ -22,7 +22,8 @@ Individual::Individual(Individual const &other) :
 {}
 
 // birth constructor
-Individual::Individual(Individual const &mum,
+Individual::Individual(
+                Individual const &mum,
                 Individual const &dad,
                 Parameters const &param,
                 std::mt19937 &rng_r)

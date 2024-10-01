@@ -41,6 +41,9 @@ class StressSocial
         
         // a metapopulation of patches containing individuals
         std::vector <Patch> metapopulation;
+        
+        // data file for output 
+        std::ofstream data_file;
 
         // functions for the life cycle: survival, replacement, etc
         void initialize_patches();
@@ -60,13 +63,11 @@ class StressSocial
         double mu(double const damage, 
                 double const vigilance);
 
-        // functions for data output
-        std::ofstream data_file;
         // NOTE: Not sure if this needs including twice?
-        void write_parameters(std::ofstream &data_file);
         void write_parameters();
         void write_data_headers();
         void write_data();
+
         void write_distribution();
 
     public:
