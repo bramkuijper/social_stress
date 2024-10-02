@@ -68,7 +68,7 @@ void StressSocial::write_distribution()
 
 void StressSocial::write_data_headers()
 {
-    data_file << "time" << std::endl;
+    data_file << "time, meanv" << std::endl;
 }
 
 // means and the variances of the various traits
@@ -80,7 +80,32 @@ void StressSocial::write_data()
     // allocate variables that contain the sum of squares (for the variances)
     // then calculate the variance as var(x) = sum_of_squares/n - mean(x) * mean(x)
 
-    data_file << time_step << std::endl;
+    double meanv {0.0}; // mean of vigilance
+    double ssv {0.0}; // sum of squares of vigilance
+    int total_individuals = 0; 
+
+    // Loop through population
+    // Check with Bram: this is just breeders.. do we have a way of
+    // looping through breeders + juveniles?
+
+    for (auto &patch : metapopulation) {
+        for (auto &breeder : patch.breeders) {
+            double vigilance = breeder.v[0] + breeder.v[1];
+            meanv += vigilance;
+            ssv += vigilance * vigilance;
+            total_individuals++;
+        }
+    }
+
+    // Calculate mean
+    
+        if (total_individuals > 0) {
+        meanv /= total_individuals;
+    }
+    
+    data_file << time_step << ";"
+        << meanv << ";" << std::endl;
+
 }
 
 
