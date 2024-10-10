@@ -1,6 +1,7 @@
 // heart of the stress social code
 
 #include <cassert>
+#include <iostream>
 #include "stress_social.hpp"
 
 // constructor function
@@ -15,7 +16,6 @@ StressSocial::StressSocial(Parameters const &parvals) :
     ,metapopulation(param.npatches, Patch(param)) // initialize the metapopulation
     ,data_file{param.file_name} // File where output is written
 {
-    write_parameters();
 
     write_data_headers();
 
@@ -35,13 +35,14 @@ StressSocial::StressSocial(Parameters const &parvals) :
         reproduce();
 
         update_stress_hormone();
-
+        
         if (time_step % param.data_output_interval == 0)
         {
             write_data();
         }
     }
 
+    write_parameters();
 } // end StressSocial constructor
 
 // go over all the patches and initialize them as type NP or P
@@ -68,7 +69,7 @@ void StressSocial::write_distribution()
 
 void StressSocial::write_data_headers()
 {
-    data_file << "time, meanv" << std::endl;
+    data_file << "time;meanv;varv;" << std::endl;
 }
 
 // means and the variances of the various traits
@@ -82,8 +83,8 @@ void StressSocial::write_data()
 
     double meanv {0.0}; // mean of vigilance
     double ssv {0.0}; // sum of squares of vigilance
-    int total_individuals = 0; // total number of indiv counter
-    double vvar {0.0}; // variance in vigilance
+    int total_individuals{0}; // total number of indiv counter
+    double varv {0.0}; // variance in vigilance
 
     // Loop through population
     // Check with Bram: this is just breeders.. do we have a way of
@@ -92,11 +93,11 @@ void StressSocial::write_data()
     for (auto &patch : metapopulation) {
         for (auto &breeder : patch.breeders) {
             double vigilance = breeder.v[0] + breeder.v[1];
+
             meanv += vigilance;
             ssv += vigilance * vigilance;
-            total_individuals++;
+            ++total_individuals;
         }
-        
     }
 
     // Calculate mean
@@ -106,10 +107,11 @@ void StressSocial::write_data()
     }
 
      // Calculate variance if total_individuals is not zero
-    vvar = (total_individuals > 0) ? (ssv / total_individuals - meanv * meanv) : 0.0;
+    varv = (total_individuals > 0) ? (ssv / total_individuals - meanv * meanv) : 0.0;
     
     data_file << time_step << ";"
-        << meanv << ";" << std::endl;
+        << meanv << ";" 
+        << varv << ";" <<  std::endl;
 
 }
 

@@ -32,7 +32,7 @@ for (s_np_i in s_np)
         writeLines(text = paste0(
                         exe
                         ," ",output_file_name
-                        ," ",s_np_i
+                        #," ",s_np_i
                         , " ", s_p_i, " ",npatches, " ",n))
     }
 }

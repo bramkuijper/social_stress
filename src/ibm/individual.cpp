@@ -85,14 +85,15 @@ void Individual::operator=(Individual const &other)
 } // end operator=()
 
 // mutate according to a continuum-of-alleles model
-double Individual::mutate(double to_mutate,
+double Individual::mutate(
+        double to_mutate,
         double const mutation_prob,
         double const mutation_sd,
         std::mt19937 &rng_r)
 {
     std::uniform_real_distribution<double> uniform{0.0,1.0};
 
-    if (mutation_prob < uniform(rng_r))
+    if (uniform(rng_r) < mutation_prob)
     {
         std::normal_distribution<double> mutational_effect_size{0.0,mutation_sd};
 

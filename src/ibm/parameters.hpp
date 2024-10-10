@@ -20,7 +20,7 @@ class Parameters
 {
     public:
 
-        unsigned data_output_interval{10};
+        unsigned data_output_interval{1};
 
         // first element female, second element male
         unsigned n{20};
@@ -30,7 +30,7 @@ class Parameters
 
         unsigned npatches{100}; 
 
-        unsigned max_time{3};
+        unsigned max_time{30000};
 
         // switch rates between predator present in patch
         // vs absent
