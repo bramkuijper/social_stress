@@ -1,6 +1,7 @@
 #!/usr/bin/env Rscript
 
 library(datetime)
+library(lubridate)
 
 exe <- "./stress_social.exe"
 file_name_prefix <- "sim_stress_social"
@@ -28,10 +29,11 @@ for (s_np_i in s_np)
         output_file_name <- paste0(file_name_prefix,"_",ctr,"_",formatted_time,".txt") 
         # assuming it needs a file type? There wasn't one before
 
-        writeLines(text = paste0(exe," ",file_name_prefix
-                        ,"_",ctr," ",s_np_i
-                        , " ", s_p_i, " ",npatches, " ",n),
-                        con = output_file_name)
+        writeLines(text = paste0(
+                        exe
+                        ," ",output_file_name
+                        ," ",s_np_i
+                        , " ", s_p_i, " ",npatches, " ",n))
     }
 }
 
