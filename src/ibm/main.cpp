@@ -9,7 +9,7 @@ int main(int argc, char **argv)
     pars.s[P] = std::stod(argv[3]);
     pars.npatches = std::stoi(argv[4]);
     pars.n = std::stoi(argv[5]);
-    pars.mv = std::stod(arg[6]); 
+    pars.mv = std::stod(argv[6]); 
 
     StressSocial sim_object(pars);
 

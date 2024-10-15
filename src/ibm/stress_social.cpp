@@ -66,14 +66,16 @@ void StressSocial::write_distribution()
 
     // print out all the values of all the individuals
 }
-
+ 
 void StressSocial::write_data_headers()
+
 {
-    data_file << "time;meanv;varv;mean_baseline_influx,
-                    var_baseline_influx,mean_stress_influx,var_stress_influx, 
-                    mean_vigilance_influx,var_vigilance_influx,mean_removal,var_removal,
-                    mean_stress_hormone,var_stress_hormone" << std::endl;
-}
+	data_file << "time;meanv;varv;mean_baseline_influx;"
+        	  << "var_baseline_influx;mean_stress_influx;var_stress_influx;"
+          	  << "mean_vigilance_influx;var_vigilance_influx;mean_removal;var_removal;"
+          	  << "mean_stress_hormone;var_stress_hormone;" << std::endl;
+
+}	
 
 // means and the variances of the various traits
 // both the genetic traits and also the non-genetic
@@ -111,10 +113,10 @@ void StressSocial::write_data()
     for (auto &patch : metapopulation) {
         for (auto &breeder : patch.breeders) {
             double vigilance = breeder.v[0] + breeder.v[1];
-            double baseline_influx = breeder.baseline_influx;
-            double stress_influx = breeder.stress_influx;
-            double vigilance_influx = breeder.vigilance_influx;
-            double removal = breeder.removal; 
+            double baseline_influx = *(breeder.baseline_influx);
+            double stress_influx = *(breeder.stress_influx);
+            double vigilance_influx = *(breeder.vigilance_influx);
+            double removal = *(breeder.removal); 
             double damage = breeder.damage;
             double stress_hormone = breeder.stress_hormone;
 
