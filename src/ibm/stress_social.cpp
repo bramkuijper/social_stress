@@ -69,7 +69,10 @@ void StressSocial::write_distribution()
 
 void StressSocial::write_data_headers()
 {
-    data_file << "time;meanv;varv;" << std::endl;
+    data_file << "time;meanv;varv;mean_baseline_influx,
+                    var_baseline_influx,mean_stress_influx,var_stress_influx, 
+                    mean_vigilance_influx,var_vigilance_influx,mean_removal,var_removal,
+                    mean_stress_hormone,var_stress_hormone" << std::endl;
 }
 
 // means and the variances of the various traits
@@ -81,21 +84,64 @@ void StressSocial::write_data()
     // allocate variables that contain the sum of squares (for the variances)
     // then calculate the variance as var(x) = sum_of_squares/n - mean(x) * mean(x)
 
+    // Allocate variables that contain means, ss and variance
+    int total_individuals{0}; // total number of indiv counter
     double meanv {0.0}; // mean of vigilance
     double ssv {0.0}; // sum of squares of vigilance
-    int total_individuals{0}; // total number of indiv counter
     double varv {0.0}; // variance in vigilance
+    double mean_baseline_influx {0.0}; // mean baseline influx
+    double ss_baseline_influx {0.0}; // sum of squares baseline influx
+    double var_baseline_influx {0.0}; // variance in baseline influx
+    double mean_stress_influx {0.0}; // mean stress influx
+    double ss_stress_influx {0.0}; // sum of squares stress influx
+    double var_stress_influx {0.0}; // variance in stress influx
+    double mean_vigilance_influx {0.0}; // mean vigilance influx
+    double ss_vigilance_influx {0.0}; // sum of squares vigilance influx
+    double var_vigilance_influx {0.0}; // variance in vigilance influx
+    double mean_removal {0.0}; // mean stress hormone removal
+    double ss_removal {0.0}; // sum of squares stress hormone removal
+    double var_removal {0.0}; // variance in stress hormone removal
+    double mean_damage {0.0}; // mean damage
+    double ss_damage {0.0}; // sum of squares damage
+    double var_damage {0.0}; // variance in damage
+    double mean_stress_hormone {0.0}; // mean stress hormone
+    double ss_stress_hormone {0.0}; // sum of squares stress hormone
+    double var_stress_hormone {0.0}; // variance in stress hormone
 
-    // Loop through population
-    // Check with Bram: this is just breeders.. do we have a way of
-    // looping through breeders + juveniles?
+
+
 
     for (auto &patch : metapopulation) {
         for (auto &breeder : patch.breeders) {
             double vigilance = breeder.v[0] + breeder.v[1];
+            double baseline_influx = breeder.baseline_influx;
+            double stress_influx = breeder.stress_influx;
+            double vigilance_influx = breeder.vigilance_influx;
+            double removal = breeder.removal; 
+            double damage = breeder.damage;
+            double stress_hormone = breeder.stress_hormone;
 
             meanv += vigilance;
             ssv += vigilance * vigilance;
+
+            mean_baseline_influx += baseline_influx;
+            ss_baseline_influx += baseline_influx * baseline_influx;
+
+            mean_stress_influx += stress_influx;
+            ss_stress_influx += stress_influx * stress_influx;
+
+            mean_vigilance_influx += vigilance_influx;
+            ss_vigilance_influx += vigilance_influx * vigilance_influx; // Is initialised correctly in individual.cpp?
+
+            mean_removal += removal;
+            ss_removal += removal * removal;
+
+            mean_damage += damage;
+            ss_damage += damage * damage;
+
+            mean_stress_hormone += stress_hormone;
+            ss_stress_hormone += stress_hormone * stress_hormone; 
+
             ++total_individuals;
         }
     }
@@ -104,14 +150,39 @@ void StressSocial::write_data()
     
         if (total_individuals > 0) {
         meanv /= total_individuals;
+        mean_baseline_influx /= total_individuals;
+        mean_stress_influx /= total_individuals;
+        mean_vigilance_influx /= total_individuals;
+        mean_removal /= total_individuals;
+        mean_damage /= total_individuals;
+        mean_stress_hormone /= total_individuals;
     }
 
      // Calculate variance if total_individuals is not zero
     varv = (total_individuals > 0) ? (ssv / total_individuals - meanv * meanv) : 0.0;
-    
+    var_baseline_influx = (total_individuals > 0) ? (ss_baseline_influx / total_individuals - mean_baseline_influx * mean_baseline_influx): 0.0;
+    var_stress_influx = (total_individuals > 0) ? (ss_stress_influx / total_individuals - mean_stress_influx * mean_stress_influx) : 0.0;
+    var_vigilance_influx = (total_individuals > 0) ? (ss_vigilance_influx / total_individuals - mean_vigilance_influx * mean_vigilance_influx) : 0.0;
+    var_removal = (total_individuals > 0) ? (ss_removal / total_individuals - mean_removal * mean_removal) : 0.0;
+    var_damage = (total_individuals > 0) ? (ss_damage / total_individuals - mean_damage * mean_damage) : 0.0;
+    var_stress_hormone = (total_individuals > 0) ? (ss_stress_hormone/ total_individuals - mean_stress_hormone * mean_stress_hormone) : 0.0;
+
+
     data_file << time_step << ";"
         << meanv << ";" 
-        << varv << ";" <<  std::endl;
+        << varv << ";" 
+        << mean_baseline_influx << ";"
+        << var_baseline_influx << ";" 
+        << mean_stress_influx << ";"
+        << var_stress_influx << ";" 
+        << mean_vigilance_influx << ";"
+        << var_vigilance_influx << ";" 
+        << mean_removal << ";"
+        << var_removal << ";" 
+        << mean_damage << ";"
+        << var_damage << ";" 
+        << mean_stress_hormone << ";"
+        << var_stress_hormone << ";" <<  std::endl;
 
 }
 
