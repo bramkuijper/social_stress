@@ -1,5 +1,6 @@
 #!/usr/bin/env Rscript
 
+install.packages(datetime)
 library(datetime)
 library(lubridate)
 
@@ -23,7 +24,7 @@ formatted_time <- format(current_time, "%Y%m%d_%H%M%S")
 for (s_np_i in s_np) 
 {
     for (s_p_i in s_p) {
-        for (mv_i in mv_values) { 
+        for (mv_i in mv_vals) { 
 
         
         ctr <- ctr + 1

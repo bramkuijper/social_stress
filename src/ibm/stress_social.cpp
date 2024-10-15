@@ -108,9 +108,6 @@ void StressSocial::write_data()
     double ss_stress_hormone {0.0}; // sum of squares stress hormone
     double var_stress_hormone {0.0}; // variance in stress hormone
 
-
-
-
     for (auto &patch : metapopulation) {
         for (auto &breeder : patch.breeders) {
             double vigilance = breeder.v[0] + breeder.v[1];
