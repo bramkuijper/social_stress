@@ -1,6 +1,5 @@
 #!/usr/bin/env Rscript
 
-install.packages(datetime)
 library(datetime)
 library(lubridate)
 
