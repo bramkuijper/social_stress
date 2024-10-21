@@ -25,6 +25,10 @@ StressSocial::StressSocial(Parameters const &parvals) :
     // now run the thing
     for (time_step = 0; time_step < param.max_time; ++time_step)
     {
+        n_attacked = 0;
+        n_death_damage = 0;
+        n_death_predator = 0;
+
         // do something!
         // effectively, we want the predator to visit some patches
         // and to attack individuals there.
@@ -166,6 +170,9 @@ void StressSocial::write_data()
     var_damage = (total_individuals > 0) ? (ss_damage / total_individuals - mean_damage * mean_damage) : 0.0;
     var_stress_hormone = (total_individuals > 0) ? (ss_stress_hormone/ total_individuals - mean_stress_hormone * mean_stress_hormone) : 0.0;
 
+    unsigned int ntotal = param.npatches * param.n;
+
+    assert(ntotal >= n_death_damage + n_death_predator);
 
     data_file << time_step << ";"
         << meanv << ";" 
@@ -181,7 +188,12 @@ void StressSocial::write_data()
         << mean_damage << ";"
         << var_damage << ";" 
         << mean_stress_hormone << ";"
-        << var_stress_hormone << ";" <<  std::endl;
+        << var_stress_hormone << ";" 
+        << n_attacked << ";"
+        << n_death_damage << ";"
+        << n_death_predator << ";"
+        << ntotal - n_death_damage - n_death_predator << ";"
+        << std::endl;
 
 }
 
@@ -209,17 +221,28 @@ void StressSocial::predator_visit()
             V = calculate_group_vigilance(*metapop_iter);
 
             // calculate the probability that nobody is vigilant
-            if (uniform(rng_r) < 1.0 - V)
+            if (uniform(rng_r) < 1.0 - V && 
+                    uniform(rng_r) < param.p_attack)
             {
                 // then sample which individual will die
                 random_breeder_idx = take_random_breeder(rng_r);
 
                 metapop_iter->breeders[random_breeder_idx].is_attacked = true;
 
-                // we need to implement that individuals can flee the attack 
-                // dependent on their stress hormone level h
-                metapop_iter->breeders[random_breeder_idx].is_alive = 
-                    uniform(rng_r) < attack_survival(metapop_iter->breeders[random_breeder_idx].stress_hormone);
+                ++n_attacked;
+
+                if (
+                        uniform(rng_r) < 
+                            attack_survival(metapop_iter->breeders[random_breeder_idx].stress_hormone))
+                {
+                    // we need to implement that individuals can flee the attack 
+                    // dependent on their stress hormone level h
+                    metapop_iter->breeders[random_breeder_idx].is_alive = true;
+                }
+                else
+                {
+                    ++n_death_predator;
+                }
             }
 
             // then store V in the patch object
@@ -279,10 +302,17 @@ void StressSocial::survive_damage_vigilance()
             d = metapop_iter->breeders[breeder_idx].damage;
             v = metapop_iter->breeders[breeder_idx].v[0] + metapop_iter->breeders[breeder_idx].v[1];
 
-            // note that mortality due to lack of vigilance
-            // is elsewhere, namely in predator_visit()
-            // individual does not survive
-            metapop_iter->breeders[breeder_idx].is_alive = uniform(rng_r) < 1.0 - mu(d, v);
+            if (uniform(rng_r) < 1.0 - mu(d, v))
+            {
+                // note that mortality due to lack of vigilance
+                // is elsewhere, namely in predator_visit()
+                // individual does not survive
+                metapop_iter->breeders[breeder_idx].is_alive = true;
+            }
+            else
+            {
+                ++n_death_damage;
+            }
         }
     }
 } // end survival_damage()

@@ -45,6 +45,11 @@ class StressSocial
         // data file for output 
         std::ofstream data_file;
 
+        // some data members to keep track of numbers of attacks, mortalities etc
+        unsigned int n_attacked{0};
+        unsigned int n_death_damage{0};
+        unsigned int n_death_predator{0};
+
         // functions for the life cycle: survival, replacement, etc
         void initialize_patches();
         void predator_visit();
