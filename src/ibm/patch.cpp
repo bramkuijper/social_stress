@@ -18,4 +18,3 @@ void Patch::operator=(Patch const &other)
     breeders = other.breeders;
     breeders_surviving = other.breeders_surviving;
 }
-

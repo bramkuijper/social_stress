@@ -25,11 +25,11 @@ StressSocial::StressSocial(Parameters const &parvals) :
     // now run the thing
     for (time_step = 0; time_step < param.max_time; ++time_step)
     {
-        n_attacked = 0;
+        // creating counters which start at 0 every generation
+        n_attacked = 0; 
         n_death_damage = 0;
         n_death_predator = 0;
 
-        // do something!
         // effectively, we want the predator to visit some patches
         // and to attack individuals there.
         predator_visit();
@@ -74,10 +74,10 @@ void StressSocial::write_distribution()
 void StressSocial::write_data_headers()
 
 {
-	data_file << "time;meanv;varv;mean_baseline_influx;"
+	data_file << "time;seed;meanv;varv;mean_baseline_influx;"
         	  << "var_baseline_influx;mean_stress_influx;var_stress_influx;"
           	  << "mean_vigilance_influx;var_vigilance_influx;mean_removal;var_removal;"
-          	  << "mean_stress_hormone;var_stress_hormone;" << std::endl;
+          	  << "mean_stress_hormone;var_stress_hormone;n_attacked,n_death_damage,n_death_predator,ntotalalive" << std::endl;
 
 }	
 
@@ -172,9 +172,10 @@ void StressSocial::write_data()
 
     unsigned int ntotal = param.npatches * param.n;
 
-    assert(ntotal >= n_death_damage + n_death_predator);
+    assert(ntotal >= n_death_damage + n_death_predator); //error checking as ntotal should always be greater
 
     data_file << time_step << ";"
+        << seed << ";"
         << meanv << ";" 
         << varv << ";" 
         << mean_baseline_influx << ";"
@@ -196,8 +197,6 @@ void StressSocial::write_data()
         << std::endl;
 
 }
-
-
 
 
 void StressSocial::predator_visit()
