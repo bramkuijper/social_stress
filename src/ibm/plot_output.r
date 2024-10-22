@@ -154,10 +154,22 @@ for (plot_struct_idx in 1:plot.structure.l)
 
 title <- ""
 
-if (exists("params") && "s_np" %in% names(params))
-{
+if (exists("params") && "s_np" %in% names(params)) {
     title <- paste0(
-            "s_np: ",params["s_np"],", s_p: ",params["s_p"], ", m_v:", params["mv"])
+        "npatches: ", params[["npatches"]], 
+        ", n: ", params[["n"]], 
+        ", maxtime: ", params[["max_time"]],
+        ", s_np: ", params[["s_np"]],
+        ", s_p: ", params[["s_p"]], 
+        ", m_d: ", params[["md"]], 
+        ", m_v: ", params[["mv"]],
+        ", p_mig: ", params[["p_mig"]], 
+        ", p_attack: ", params[["p_attack"]], 
+        ", init_v: ", params[["init_v"]],
+        ", init_stress_hormone: ", params[["init_stress_hormone_level"]], 
+        ", damage removal: ", params[["g"]], 
+        ", hormone damage incr: ", params[["k"]]
+    )
 }
 
 wrap_plots(plot.list,ncol=1) + plot_annotation(
