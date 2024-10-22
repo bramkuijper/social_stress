@@ -156,24 +156,20 @@ title <- ""
 
 if (exists("params") && "s_np" %in% names(params)) {
     title <- paste0(
-        "npatches: ", params[["npatches"]], 
-        ", n: ", params[["n"]], 
-        ", maxtime: ", params[["max_time"]],
-        ", s_np: ", params[["s_np"]],
-        ", s_p: ", params[["s_p"]], 
-        ", m_d: ", params[["md"]], 
-        ", m_v: ", params[["mv"]],
-        ", p_mig: ", params[["p_mig"]], 
-        ", p_attack: ", params[["p_attack"]], 
-        ", init_v: ", params[["init_v"]],
-        ", init_stress_hormone: ", params[["init_stress_hormone_level"]], 
-        ", damage removal: ", params[["g"]], 
-        ", hormone damage incr: ", params[["k"]]
-    )
+	"npatches: ", params[["npatches"]], ", n: ", params[["n"]], "\n",
+    "maxtime: ", params[["max_time"]], ", s_np: ", params[["s_np"]], "\n",
+    "s_p: ", params[["s_p"]], ", m_d: ", params[["md"]], "\n",
+    "m_v: ", params[["mv"]], ", p_mig: ", params[["p_mig"]], "\n",
+    "p_attack: ", params[["p_attack"]], ", init_v: ", params[["init_v"]], "\n",
+    "init_stress_hormone: ", params[["init_stress_hormone_level"]], "\n",
+    "damage removal: ", params[["g"]], ", hormone damage incr: ", params[["k"]]
+)
+
 }
 
-wrap_plots(plot.list,ncol=1) + plot_annotation(
-        title=title)
+wrap_plots(plot.list,ncol=1) + 
+	plot_annotation(title=title) +
+	theme (plot.title = element_text(size=10))
 
 file.name <- paste0("graph_",basename(file.name),".pdf")
 
