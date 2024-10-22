@@ -6,19 +6,19 @@ library(lubridate)
 exe <- "./stress_social.exe"
 file_name_prefix <- "sim_stress_social"
 
-npatches_vals = c(100, 200) # number of patches
-n_vals = c(10, 20) # num individuals per patch
-max_time_vals = c(1000,5000) # max time
-s_np = c(0.1,0.5,0.9) # switch rate NP to P
-s_p = c(0.1,0.5,0.9) # switch rate P to NP 
-md_vals = c(0.1,0.2) # weight of damage-related mortality
-mv_vals = c(0.1, 0.5, 1.0) # weight of vigilance-related mortality
-p_mig_vals = c(0.1,0.3) # migration probability
-p_attack_vals = c(0.2,0.4) # probability of being attacked when predator present
-init_v_vals = c(0.3, 0.5)           # Initial vigilance
-init_stress_vals = c(0.4, 0.6)      # Initial stress hormone level
-g_vals = c(0.01, 0.02)              # Damage removal per timestep
-k_vals = c(0.05, 0.1)               # Increase in damage due to hormone != optimum
+npatches_vals = c(200) # number of patches
+n_vals = c(20) # num individuals per patch
+max_time_vals = c(30000) # max time
+s_np = c(0.1) # switch rate NP to P
+s_p = c(0.1) # switch rate P to NP 
+md_vals = c(1.0, 5.0, 10.0) # weight of damage-related mortality
+mv_vals = c(1.0) # weight of vigilance-related mortality
+p_mig_vals = c(0.1) # migration probability
+p_attack_vals = c(0.1) # probability of being attacked when predator present
+init_v_vals = c(0.3) # Initial vigilance
+init_stress_vals = c(0.4) # Initial stress hormone level
+g_vals = c(0.1) # Damage removal per timestep
+k_vals = c(0.1) # Increase in damage due to hormone != optimum
 
 ctr <- 0
 
