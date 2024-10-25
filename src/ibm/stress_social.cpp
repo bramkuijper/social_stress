@@ -250,6 +250,8 @@ void StressSocial::predator_visit()
     }
 } // end predator_visit()
 
+assert(ntotal >= n_death_predator); //error checking as ntotal should always be greater
+
 
 // probability of surviving an attack given hormone level h
 double StressSocial::attack_survival(double const h)
@@ -315,6 +317,8 @@ void StressSocial::survive_damage_vigilance()
         }
     }
 } // end survival_damage()
+
+assert(ntotal >= n_death_damage); //error checking as ntotal should always be greater
 
 // mortality due to baseline mortality, damage and investment in vigilance
 double StressSocial::mu(
