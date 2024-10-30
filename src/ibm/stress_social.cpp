@@ -34,11 +34,23 @@ StressSocial::StressSocial(Parameters const &parvals) :
         // and to attack individuals there.
         predator_visit();
         
-        survive_damage_vigilance();
+	assert(param.n * param.npatches >= n_death_damage); //error checking as ntotal should always be greater
+       	assert(param.n * param.npatches >= n_death_predator); //error checking as ntotal should always be greater
+       	assert(param.n * param.npatches >= n_death_damage + n_death_predator); //error checking as ntotal should always be greater
 
-        reproduce();
+	survive_damage_vigilance();
 
-        update_stress_hormone();
+	assert(param.n * param.npatches >= n_death_damage); //error checking as ntotal should always be greater
+       	assert(param.n * param.npatches >= n_death_predator); //error checking as ntotal should always be greater
+       	assert(param.n * param.npatches >= n_death_damage + n_death_predator); //error checking as ntotal should always be greater
+
+	reproduce();
+
+	assert(param.n * param.npatches >= n_death_damage); //error checking as ntotal should always be greater
+       	assert(param.n * param.npatches >= n_death_predator); //error checking as ntotal should always be greater
+       	assert(param.n * param.npatches >= n_death_damage + n_death_predator); //error checking as ntotal should always be greater
+
+	update_stress_hormone();
         
         if (time_step % param.data_output_interval == 0)
         {
@@ -241,6 +253,7 @@ void StressSocial::predator_visit()
                 else
                 {
                     ++n_death_predator;
+                    metapop_iter->breeders[random_breeder_idx].is_alive = false;
                 }
             }
 
@@ -250,7 +263,6 @@ void StressSocial::predator_visit()
     }
 } // end predator_visit()
 
-assert(ntotal >= n_death_predator); //error checking as ntotal should always be greater
 
 
 // probability of surviving an attack given hormone level h
@@ -300,6 +312,8 @@ void StressSocial::survive_damage_vigilance()
                 breeder_idx < metapop_iter->breeders.size();
                 ++breeder_idx)
         {
+	if (metapop_iter->breeders[breeder_idx].is_alive)
+	{
             d = metapop_iter->breeders[breeder_idx].damage;
             v = metapop_iter->breeders[breeder_idx].v[0] + metapop_iter->breeders[breeder_idx].v[1];
 
@@ -308,17 +322,18 @@ void StressSocial::survive_damage_vigilance()
                 // note that mortality due to lack of vigilance
                 // is elsewhere, namely in predator_visit()
                 // individual does not survive
-                metapop_iter->breeders[breeder_idx].is_alive = true;
+	    metapop_iter->breeders[breeder_idx].is_alive = true;
             }
             else
             {
                 ++n_death_damage;
-            }
-        }
+	    	metapop_iter->breeders[breeder_idx].is_alive = false;
+	    }
+	}
+	}
     }
 } // end survival_damage()
 
-assert(ntotal >= n_death_damage); //error checking as ntotal should always be greater
 
 // mortality due to baseline mortality, damage and investment in vigilance
 double StressSocial::mu(
