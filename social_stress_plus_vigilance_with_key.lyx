@@ -514,5 +514,14 @@ Variable Key
  reduced foraging) which can increase mortality over time
 \end_layout
 
+\begin_layout Description
+\begin_inset Formula $q\left(s_{t}\right)$
+\end_inset
+
+ Represents focal stress hormonal dependent survival / fight or flight response,
+ not related to vigilance.
+ Individual has a survival boost from having a higher stress hormone level
+\end_layout
+
 \end_body
 \end_document
