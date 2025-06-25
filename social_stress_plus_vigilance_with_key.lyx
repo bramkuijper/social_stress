@@ -1,0 +1,518 @@
+#LyX 2.4 created this file. For more info see https://www.lyx.org/
+\lyxformat 620
+\begin_document
+\begin_header
+\save_transient_properties true
+\origin unavailable
+\textclass article
+\use_default_options true
+\maintain_unincluded_children no
+\language american
+\language_package default
+\inputencoding utf8
+\fontencoding auto
+\font_roman "default" "default"
+\font_sans "default" "default"
+\font_typewriter "default" "default"
+\font_math "auto" "auto"
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_roman_osf false
+\font_sans_osf false
+\font_typewriter_osf false
+\font_sf_scale 100 100
+\font_tt_scale 100 100
+\use_microtype false
+\use_dash_ligatures true
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\float_placement class
+\float_alignment class
+\paperfontsize default
+\use_hyperref false
+\papersize default
+\use_geometry false
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine basic
+\cite_engine_type default
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 1
+\use_formatted_ref 0
+\use_minted 0
+\use_lineno 0
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\is_math_indent 0
+\math_numbering_side default
+\quotes_style english
+\dynamic_quotes 0
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tablestyle default
+\tracking_changes false
+\output_changes false
+\change_bars false
+\postpone_fragile_content true
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\docbook_table_output 0
+\docbook_mathml_prefix 1
+\end_header
+
+\begin_body
+
+\begin_layout Standard
+Hidden assumption:
+ predator attacks every time step.
+ Individuals have the opportunity to observe it before it attacks.
+\end_layout
+
+\begin_layout Standard
+Classical vigilance model is something like:
+\begin_inset Formula 
+\begin{align*}
+p_{\mathrm{survive}} & =\left(1-\mu\left(d_{t}\right)\right)\left[p_{\mathrm{attack}}\left[(1-V)\frac{n-1}{n}+V\right]+1-p_{\mathrm{attack}}\right]
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Now with stress added to the model:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{align*}
+p_{\mathrm{survive}}(s_{t},S_{t}) & =\left(1-\mu\left(d_{t}\right)\right)\left[p_{\mathrm{attack}}\left[\left(1-V\left(S_{t}\right)\right)\left[\frac{n-1}{n}+\frac{1}{n}q\left(s_{t}\right)\right]+V(S_{t}).\right]+1-p_{\mathrm{attack}}\right]
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+What will the stress hormone then look like?
+ (what about delays between observing a stressor and it actually attacking).
+\begin_inset Formula 
+\begin{align*}
+s_{t+1} & =(1-r)s_{t}+z_{\mathrm{baseline}}+\delta_{\mathrm{attack}}z_{\mathrm{influx}}+b_{\mathrm{vigilance}}V\left(S_{t}\right).
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+What would be an individual's initial state 
+\begin_inset Formula $s_{0}$
+\end_inset
+
+ of the stress hormone.
+ Different options possible,
+ but for sake of tractability,
+ lets consider that it is the equilibrium value at the start of one's life:
+\begin_inset Formula 
+\begin{align*}
+s_{0} & =\left(1-r\right)s_{0}+z_{\mathrm{baseline}}\\
+s_{0}-1\cdot s_{0}+rs_{0} & =z_{\mathrm{baseline}}\\
+rs_{0} & =z_{\mathrm{baseline}}\\
+s_{0} & =z_{\mathrm{baseline}}/r
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+We have two patches,
+ predator present and predator absent,
+ where switch rates between predator present 
+\begin_inset Formula $\sigma_{NP\rightarrow P}$
+\end_inset
+
+ and absent 
+\begin_inset Formula $\sigma_{P\rightarrow NP}$
+\end_inset
+
+ determine overall risk of predation 
+\begin_inset Formula $u$
+\end_inset
+
+ as well as the autocorrelation 
+\begin_inset Formula $\rho$
+\end_inset
+
+
+\begin_inset Formula 
+\begin{align*}
+u & =\frac{\sigma_{NP\rightarrow P}}{\sigma_{NP\rightarrow P}+\sigma_{P\rightarrow NP}}\\
+\rho & =1-\sigma_{NP\rightarrow P}-\sigma_{P\rightarrow NP}
+\end{align*}
+
+\end_inset
+
+Once you are in a P environment,
+ attacks will take place with probability 
+\begin_inset Formula $p_{\mathrm{attack}}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+From individual vigilance to collective vigilance
+\begin_inset Formula 
+\begin{align*}
+V(S_{t}) & =1-\left(1-v\left(s_{t}\right)\right)^{n}.
+\end{align*}
+
+\end_inset
+
+How is individual vigilance then dependent on its stress hormone level
+\begin_inset Formula 
+\begin{align*}
+v\left(s_{t}\right) & =a_{v}+b_{\mathrm{stress\rightarrow vigilance}}s_{t}/s_{\mathrm{max}}.
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Damage 
+\begin_inset Formula 
+\begin{align*}
+d_{t+1} & =\left(1-g\right)d_{t}+k\left(s_{t}-\theta_{s}\right)^{2}.
+\end{align*}
+
+\end_inset
+
+Damage-related mortality + vigilance-related mortality
+\begin_inset Formula 
+\begin{align*}
+μ\left(d_{t}\right) & =m_{0}+m_{d}\frac{d_{t}}{d_{\mathrm{max}}}+m_{v}\frac{v\left(s_{t}\right)}{v_{\mathrm{max}}}.
+\end{align*}
+
+\end_inset
+
+Ideally,
+ in later models,
+ we vary the life-history consequences of costs by expressing costs also in terms in fecundity.
+\end_layout
+
+\begin_layout Standard
+Evolving traits:
+ 
+\end_layout
+
+\begin_layout Standard
+1.
+ 
+\begin_inset Formula $r$
+\end_inset
+
+ (stress hormone removal rate)
+\end_layout
+
+\begin_layout Standard
+2.
+ 
+\begin_inset Formula $z_{\mathrm{baseline}}$
+\end_inset
+
+ (baseline stress hormone level)
+\end_layout
+
+\begin_layout Standard
+3.
+ 
+\begin_inset Formula $z_{\mathrm{influx}}$
+\end_inset
+
+ (influx in hormone level upon attack)
+\end_layout
+
+\begin_layout Standard
+4.
+ 
+\begin_inset Formula $b_{\mathrm{vigilance}}$
+\end_inset
+
+ (influx in hormone level based on population-level vigilance)
+\end_layout
+
+\begin_layout Standard
+5.
+ 
+\begin_inset Formula $a_{v}$
+\end_inset
+
+ (baseline vigilance)
+\end_layout
+
+\begin_layout Standard
+6.
+ 
+\begin_inset Formula $b_{\mathrm{stress\rightarrow vigilance}}$
+\end_inset
+
+ (relationship between stress hormones and vigilance).
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $r$
+\end_inset
+
+ and 
+\begin_inset Formula $a_{v}$
+\end_inset
+
+ are likely going to be constant in the beginning.
+\end_layout
+
+\begin_layout Section
+Potential avenues
+\end_layout
+
+\begin_layout Standard
+Extend a classical foraging vs vigilance to include a stress angle as well.
+\end_layout
+
+\begin_layout Section
+Variable Key
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $d_{t}$
+\end_inset
+
+ Damage at time t
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $μ(d_{t})$
+\end_inset
+
+ Mortality probability due to accumulated damage
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $V$
+\end_inset
+
+ Collective vigilance (group-level)
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $v(s_{t})$
+\end_inset
+
+ Individual vigilance as a function of stress hormone level
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $a_{v}$
+\end_inset
+
+ Baseline vigilance (evolvable trait)
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $b_{stress}\rightarrow vigilance$
+\end_inset
+
+ Slope of vigilance response to stress (evolvable trait)
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $n$
+\end_inset
+
+ Group size
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $s_{t}$
+\end_inset
+
+ Stress hormone level at time t
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $s_{max}$
+\end_inset
+
+ Maximum possible hormone level
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $z_{baseline}$
+\end_inset
+
+ Baseline stress hormone input (evolvable trait)
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $δ_{attack}$
+\end_inset
+
+ Binary indicator for whether a predator attack occurred
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $z_{influx}$
+\end_inset
+
+ Stress hormone added during attack (evolvable trait)
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $b_{vigilance}$
+\end_inset
+
+ Stress hormone added due to vigilance (evolvable trait)
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $r$
+\end_inset
+
+ Stress hormone recovery rate (evolvable trait)
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $σ_{NP\rightarrow P}$
+\end_inset
+
+ Patch switching rate:
+ predator-absent to predator-present
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $σ_{P\rightarrow NP}$
+\end_inset
+
+ Patch switching rate:
+ predator-present to predator-absent
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $u$
+\end_inset
+
+ Probability of being in predator-present patch
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $ρ$
+\end_inset
+
+ Autocorrelation of predator environment
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $p_{attack}$
+\end_inset
+
+ Probability of predator attack
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $g$
+\end_inset
+
+ Damage clearance rate
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $k$
+\end_inset
+
+ Damage cost factor (penalty for hormone deviation)
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $θ_{s}$
+\end_inset
+
+ Optimal hormone level
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $m_{0}$
+\end_inset
+
+ Baseline mortality
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $m_{d}$
+\end_inset
+
+ Damage-related mortality weight
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $m_{v}$
+\end_inset
+
+ Vigilance-related mortality weight
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $d_{max},v_{max}$
+\end_inset
+
+ Scaling constants for damage and vigilance in mortality
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $q(s_{t})$
+\end_inset
+
+ Stress-modulated detection probability - the probability of detecting a predator when not vigilant,
+ modulated by stress hormone levels
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $m_{v}\frac{v\left(s_{t}\right)}{v_{\mathrm{max}}}$
+\end_inset
+
+ Reflects opportunity costs of vigilance (e.g.:
+ reduced foraging) which can increase mortality over time
+\end_layout
+
+\end_body
+\end_document
