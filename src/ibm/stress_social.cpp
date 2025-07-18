@@ -86,10 +86,15 @@ void StressSocial::write_distribution()
 void StressSocial::write_data_headers()
 
 {
-	data_file << "time;seed;meanv;varv;mean_baseline_influx;"
-        	  << "var_baseline_influx;mean_stress_influx;var_stress_influx;"
-          	  << "mean_vigilance_influx;var_vigilance_influx;mean_removal;var_removal;"
-          	  << "mean_stress_hormone;var_stress_hormone;n_attacked,n_death_damage,n_death_predator,ntotalalive" << std::endl;
+	data_file << "time;seed;meanv;varv;"
+            << "mean_baseline_influx; var_baseline_influx;"
+            << "mean_stress_influx;var_stress_influx;"
+            << "mean_vigilance_influx;var_vigilance_influx;"
+            << "mean_removal;var_removal;"
+            << "mean_damage; var_damage;"
+            << "mean_stress_hormone;var_stress_hormone;"
+            << "n_attacked;n_death_damage;n_death_predator;ntotalalive" 
+            << std::endl;
 
 }	
 
