@@ -20,6 +20,7 @@ StressSocial::StressSocial(Parameters const &parvals) :
     write_data_headers();
 
     // make some patches P and some NP
+    // TODO EG: This sets P/NP only at t=0 so no switching applied later
     initialize_patches();
 
     // now run the thing
@@ -32,6 +33,8 @@ StressSocial::StressSocial(Parameters const &parvals) :
 
         // effectively, we want the predator to visit some patches
         // and to attack individuals there.
+
+// TODO EG: Missing environment switching step. Call switch_predator_status() each timestep using rates s[NP] and s[P].
         predator_visit();
         
 	assert(param.n * param.npatches >= n_death_damage); //error checking as ntotal should always be greater
@@ -84,7 +87,10 @@ void StressSocial::write_distribution()
 }
  
 void StressSocial::write_data_headers()
+// TODO EG: Add total_global_fecundity (and maybe mean_prob_immigrant) as extra output columns 
+// so that we can track overall fecundity across all patches each timestep
 
+// TODO EG: Clarify in headers that mean* are phenotypic (0.5*(a0+a1)) rather than single-allele
 {
 	data_file << "time;seed;meanv;varv;"
             << "mean_baseline_influx; var_baseline_influx;"
@@ -133,11 +139,19 @@ void StressSocial::write_data()
 
     for (auto &patch : metapopulation) {
         for (auto &breeder : patch.breeders) {
+
+    // TODO EG: v is baseline-only/currently static and not evolving (v[0]+v[1])
+    // Switch to v_eff = f(stress_hormone, a_v, b_stress→vigilance) here.
+
+    // TODO EG: output both v_baseline_sum and v_eff=0.5*(v0+v1) (clamped) for clarity
+
+    // TODO EG: For any values below with derefs (*), output phenotypes as 0.5*(a0+a1) for diploid averaging
+
             double vigilance = breeder.v[0] + breeder.v[1];
-            double baseline_influx = *(breeder.baseline_influx);
-            double stress_influx = *(breeder.stress_influx);
-            double vigilance_influx = *(breeder.vigilance_influx);
-            double removal = *(breeder.removal); 
+            double baseline_influx = *(breeder.baseline_influx); // TODO EG: Only uses allele[0]. Additive so need to output sum or mean e.g.: (0.5*(a0+a1))
+            double stress_influx = *(breeder.stress_influx); // TODO EG: Only uses allele[0]. Additive so need to output sum or mean e.g.: (0.5*(a0+a1))
+            double vigilance_influx = *(breeder.vigilance_influx); // TODO EG: Only uses allele[0]. Additive so need to output sum or mean e.g.: (0.5*(a0+a1))
+            double removal = *(breeder.removal); // TODO EG: Only uses allele[0]. Additive so need to output sum or mean e.g.: (0.5*(a0+a1))
             double damage = breeder.damage;
             double stress_hormone = breeder.stress_hormone;
 
@@ -191,6 +205,9 @@ void StressSocial::write_data()
 
     assert(ntotal >= n_death_damage + n_death_predator); //error checking as ntotal should always be greater
 
+// TODO EG: Also output total_global_fecundity (sum of all group_level_fecundities)
+// Computed in reproduce() and pass here, or recompute from metapopulation 
+
     data_file << time_step << ";"
         << seed << ";"
         << meanv << ";" 
@@ -231,12 +248,27 @@ void StressSocial::predator_visit()
             metapop_iter != metapopulation.end();
             ++metapop_iter)
     {
+// TODO EG: predator_patch never changes over time;
+// add switching so this condiction reflects a dynamic environment (temporal autocorrelation p)
+
+// TODO EG: Group vigilance V is not initialised for NP patches
+// set metapop_iter->V - 0.0 in an else branch or similar
         if (metapop_iter->predator_patch)
         {
             // check whether at least one individual is vigilant
+
+    // TODO EG: v is baseline-only/currently static and not evolving (v[0]+v[1])
+    // Switch to v_eff = f(stress_hormone, a_v, b_stress→vigilance) here.
+
+    // TODO EG: V is based on v[0]+v[1]; ensure calculate_group_vigilance uses v_eff so (1-V) is valid
             V = calculate_group_vigilance(*metapop_iter);
 
             // calculate the probability that nobody is vigilant
+
+    // TODO EG: v is baseline-only/currently static and not evolving (v[0]+v[1])
+    // Switch to v_eff = f(stress_hormone, a_v, b_stress→vigilance) here.
+
+    // TODO EG: V is based on v[0]+v[1]; ensure calculate_group_vigilance uses v_eff so (1-V) is valid
             if (uniform(rng_r) < 1.0 - V && 
                     uniform(rng_r) < param.p_attack)
             {
@@ -277,7 +309,7 @@ double StressSocial::attack_survival(double const h)
 }
 
 // go over all patches and calculate the total probability
-// that none of the individuals are vigilant
+// that none of the individuals are vigilant. 
 double StressSocial::calculate_group_vigilance(Patch const &current_patch)
 {
     double prob_none_vigilant = 1.0;
@@ -288,6 +320,10 @@ double StressSocial::calculate_group_vigilance(Patch const &current_patch)
             breeder_iter != current_patch.breeders.end();
             ++breeder_iter)
     {
+    // TODO EG: v is baseline-only/currently static and not evolving (v[0]+v[1])
+    // Switch to v_eff = f(stress_hormone, a_v, b_stress→vigilance) here.
+
+    // TODO EG: v_total can be [0.2]. Use v-eff = clamp (0.5*(v0+v1),0,1) here to keep (1-v_eff) valid
         prob_none_vigilant = prob_none_vigilant * (1.0 - breeder_iter->v[0] - breeder_iter->v[1]);
     }
 
@@ -320,6 +356,11 @@ void StressSocial::survive_damage_vigilance()
 	if (metapop_iter->breeders[breeder_idx].is_alive)
 	{
             d = metapop_iter->breeders[breeder_idx].damage;
+
+    // TODO EG: v is baseline-only/currently static and not evolving (v[0]+v[1])
+    // Switch to v_eff = f(stress_hormone, a_v, b_stress→vigilance) here.
+
+    // TODO EG: use v_eff = clamp(0.5*(v0+v1),0,1) so mortality term mv*v is bounded
             v = metapop_iter->breeders[breeder_idx].v[0] + metapop_iter->breeders[breeder_idx].v[1];
 
             if (uniform(rng_r) < 1.0 - mu(d, v))
@@ -356,6 +397,7 @@ void StressSocial::reproduce()
     // list of all the group level fecundities
     std::vector <double> group_level_fecundities;
 
+// TODO EG: Bug - never incremented, so total_global_fecundity stays at 0 and no immigrants are ever sampled
     // total fecundity across all groups
     double total_global_fecundity = 0.0;
 
@@ -385,6 +427,11 @@ void StressSocial::reproduce()
                 ++breeder_iter)
         {
             // calculate 1 - v^x
+
+    // TODO EG: v is baseline-only/currently static and not evolving (v[0]+v[1])
+    // Switch to v_eff = f(stress_hormone, a_v, b_stress→vigilance) here.
+
+    // TODO EG: use v_eff = clamp(0.5*(v0+v1),0,1) so fecundity stays in [0.1]
             individual_fecundity = 1.0 - std::pow(breeder_iter->v[0] + breeder_iter->v[1], param.fecundity_power);
 
             individual_level_fecundities.push_back(individual_fecundity);
@@ -405,7 +452,12 @@ void StressSocial::reproduce()
 
         // add the total fecundity value to the list of group-level fecundities
         group_level_fecundities.push_back(group_level_fecundity);
+
+// TODO EG: Fix bug here - also accumulate the global_total_fecundity so that migration works
+// total_global_fecundity += group_level_fecundity;
+
     }
+
 
     // make a probability distribution of the patch level fecundities
     std::discrete_distribution<unsigned> group_level_fecundity_distribution(
@@ -431,10 +483,12 @@ void StressSocial::reproduce()
     {
         total_local_fecundity = group_level_fecundities[patch_idx];
 
+// TODO EG: Bug as total_global_fecundity is 0 unless accumulated above, so no immigrants are ever sampled
         migrant_contribution = param.p_mig * total_global_fecundity / param.npatches;
 
         local_contribution = (1.0 - param.p_mig) * total_local_fecundity;
 
+        // if total_global_fecundity isn't accumulated, this collapses to 0 (no immigrants)
         probability_sample_immigrant = migrant_contribution / (local_contribution + migrant_contribution);
 
         // calculate fecundity for each group
@@ -550,6 +604,8 @@ void StressSocial::update_stress_hormone()
                 baseline_influx +
                 breeder_iter->is_attacked * stress_influx + 
                 vigilance_influx * metapop_iter->V;
+
+// TODO EG: add v=f(stress) here
 
             // d(t+1) = (1-g)d + k(h - theta_h)^2
             damage_tplus1 = (1.0 - param.g) * damage + param.k * (stress_hormone - param.theta_hormone) * (stress_hormone - param.theta_hormone);

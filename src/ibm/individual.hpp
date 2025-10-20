@@ -14,7 +14,9 @@ class Individual
         double baseline_influx[2]{0.0,0.0}; 
         double stress_influx[2]{0.0,0.0}; 
         double vigilance_influx[2]{0.0,0.0}; 
-        double removal[2]{0.0,0.0}; 
+        double removal[2]{0.0,0.0};
+
+// TODO EG: Evolvable baseline vigilance alleles (a_v). No b_stressvigilance trait yet as v is baseline only
         double v[2]{0.0,0.0}; // vigilance
 
         // state variables
