@@ -58,6 +58,11 @@ Individual::Individual(
     v[0] = std::clamp(v[0], 0.0, 1.0);
     v[1] = mutate(dad.v[segregator(rng_r)], param.mu_v, param.sdmu, rng_r);
     v[1] = std::clamp(v[1], 0.0, 1.0);
+    
+      // EG NOTE: Evolvable baseline vigilance alleles (a_v).
+      // No b_stress?vigilance trait yet – vigilance is baseline-only.
+      // Expressed vigilance is calculated via effective_vigilance()
+      // = 0.5*(v[0] + v[1]) clamped to [0,1] in stress_social.cpp.
 
 
     // updating the state variables

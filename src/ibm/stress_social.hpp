@@ -44,6 +44,9 @@ class StressSocial
         
         // data file for output 
         std::ofstream data_file;
+        
+        // EG FIX: store total fecundity across all patches for the last timestep for printing
+        double last_total_global_fecundity;
 
         // some data members to keep track of numbers of attacks, mortalities etc
         unsigned int n_attacked{0};
