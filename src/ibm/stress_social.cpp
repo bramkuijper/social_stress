@@ -452,9 +452,10 @@ void StressSocial::reproduce()
 
         // add the total fecundity value to the list of group-level fecundities
         group_level_fecundities.push_back(group_level_fecundity);
+        
 
-// TODO EG: Fix bug here - also accumulate the global_total_fecundity so that migration works
-// total_global_fecundity += group_level_fecundity;
+        // FIX EG: accumulate global fecundity across all patches so that migration works
+        total_global_fecundity += group_level_fecundity;
 
     }
 
@@ -483,12 +484,13 @@ void StressSocial::reproduce()
     {
         total_local_fecundity = group_level_fecundities[patch_idx];
 
-// TODO EG: Bug as total_global_fecundity is 0 unless accumulated above, so no immigrants are ever sampled
+        // FIX EG: total_global_fecundity is now accumulated above
+        // so migrant_contribution can be > 0 and immigration can actually occur 
         migrant_contribution = param.p_mig * total_global_fecundity / param.npatches;
 
         local_contribution = (1.0 - param.p_mig) * total_local_fecundity;
 
-        // if total_global_fecundity isn't accumulated, this collapses to 0 (no immigrants)
+        // probability that we draw parents from another patch
         probability_sample_immigrant = migrant_contribution / (local_contribution + migrant_contribution);
 
         // calculate fecundity for each group
@@ -546,7 +548,15 @@ void StressSocial::reproduce()
             } // end if breeder_iter is_alive
         } // end for breeder_iter
     } // end for patch_idx
+    
+    // TODO EG: total_global_fecundity now reflects the sum of all group_level_fecundity
+    // for this timestep. If we want to write this to the output file in write_data(),
+    // we can store it as a member variable (e.g. last_total_global_fecundity)
+    // and print it there.
+    
 } // end StressSocial::reproduce()
+
+
 
 // write parameters to file
 void StressSocial::write_parameters() 
