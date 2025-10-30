@@ -34,8 +34,21 @@ StressSocial::StressSocial(Parameters const &parvals) :
         // effectively, we want the predator to visit some patches
         // and to attack individuals there.
 
-// TODO EG: Missing environment switching step. Call switch_predator_status() each timestep using rates s[NP] and s[P].
-        predator_visit();
+// EG FIX: update predator presence/absence for each patch before attacks etc.
+for (time_step = 0; time_step < param.max_time; ++time_step)
+{
+    switch_predator_status();
+
+    predator_visit();
+    survive_damage_vigilance();
+    reproduce();
+    update_stress_hormone();
+
+    if (time_step % param.data_output_interval == 0)
+    {
+        write_data();
+    }
+}
         
 	assert(param.n * param.npatches >= n_death_damage); //error checking as ntotal should always be greater
        	assert(param.n * param.npatches >= n_death_predator); //error checking as ntotal should always be greater
@@ -75,6 +88,35 @@ void StressSocial::initialize_patches()
             ++patch_iterator)
     {
         patch_iterator->predator_patch = uniform(rng_r) < prob_P; // If draw number lower than prob_P, then P = TRUE
+    }
+}
+
+// EG FIX: update whether each patch has a predator, once per timestep
+// Uses s[NP] (NP -> P) and s[P] (P -> NP)
+
+void StressSocial::switch_predator_status()
+{
+
+    for (auto metapop_iter = metapopulation.begin();
+         metapop_iter != metapopulation.end();
+         ++metapop_iter)
+    {
+        if (metapop_iter->predator_patch == false)
+        {
+            // currently NP; can switch to P with probability s[NP]
+            if (uniform(rng_r) < param.s[NP])
+            {
+                metapop_iter->predator_patch = true;
+            }
+        }
+        else
+        {
+            // currently P; can switch to NP with probability s[P]
+            if (uniform(rng_r) < param.s[P])
+            {
+                metapop_iter->predator_patch = false;
+            }
+        }
     }
 }
 

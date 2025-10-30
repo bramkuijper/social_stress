@@ -52,8 +52,8 @@ class StressSocial
 
         // functions for the life cycle: survival, replacement, etc
         void initialize_patches();
+        void switch_predator_status(); //EG FIX: To update predator presence/absence each timestep
         void predator_visit();
-        void switch_predator_status();
 
         double calculate_group_vigilance(Patch const &current_patch);
         double attack_survival(double const h);
