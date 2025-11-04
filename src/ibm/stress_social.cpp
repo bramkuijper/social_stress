@@ -257,8 +257,8 @@ void StressSocial::write_data()
         << n_attacked << ";"
         << n_death_damage << ";"
         << n_death_predator << ";"
-        << ntotal - n_death_damage - n_death_predator << ";"
-        << std::endl;
+        << (ntotal - n_death_damage - n_death_predator)
+        << '\n'; // EG fix issue with semicolon stuck after death info 
 
 }
 
