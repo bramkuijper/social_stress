@@ -133,6 +133,7 @@ void StressSocial::write_data_headers()
             << "mean_damage;var_damage;"
             << "mean_stress_hormone;var_stress_hormone;"
             << "total_global_fecundity;"
+            << "predator_presence_fraction;" // addition of predator presence fraction in output
             << "n_attacked;n_death_damage;n_death_predator;ntotalalive" 
             << std::endl;
             
@@ -173,6 +174,7 @@ void StressSocial::write_data()
     double mean_stress_hormone {0.0}; // mean stress hormone
     double ss_stress_hormone {0.0}; // sum of squares stress hormone
     double var_stress_hormone {0.0}; // variance in stress hormone
+    double predator_presence_fraction = 0.0; // track predator presence across patches
 
     for (auto &patch : metapopulation) {
         for (auto &breeder : patch.breeders) {
@@ -211,6 +213,14 @@ void StressSocial::write_data()
             ++total_individuals;
         }
     }
+    
+    // EG FIX: Fraction of patches with predator present this timestep - needed in output
+    int predator_patches = 0;
+    for (const auto &patch : metapopulation) {
+        if (patch.predator_patch) ++predator_patches;
+    }
+    predator_presence_fraction =
+        static_cast<double>(predator_patches) / param.npatches;
 
     // Calculate mean
     
@@ -254,6 +264,7 @@ void StressSocial::write_data()
         << mean_stress_hormone << ";"
         << var_stress_hormone << ";" 
         << last_total_global_fecundity << ";"
+        << predator_presence_fraction << ";" // addition
         << n_attacked << ";"
         << n_death_damage << ";"
         << n_death_predator << ";"
