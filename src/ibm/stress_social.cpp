@@ -4,6 +4,7 @@
 #include <iostream>
 #include <cmath>
 #include <numeric>
+#include <fstream>
 
 #include "stress_social.hpp"
 #include "patch.hpp"
@@ -39,10 +40,15 @@ StressSocial::StressSocial(Parameters const &parvals) :
     // make some patches P and some NP
     initialize_patches();
 
-// now run the thing (with EG FIXES to update predator presence/absence for each patch before 
+// now run the thing (with EG FIXES to update predator presence/absence for each patch before
+// EG added writing of distribution to new file at time_step == 0 
 for (time_step = 0; time_step < param.max_time; ++time_step)
 {
 
+      // at start of first time step, write out all individuals
+      if (time_step == 0) {
+          write_distribution();
+          }
       // reset counters at the start of each timestep
         n_attacked = 0; 
         n_death_damage = 0;
@@ -114,12 +120,69 @@ void StressSocial::switch_predator_status()
     }
 }
 
-// print out the distribution of all the individuals
+// print out the distribution/values of all the individuals
+// EG added: creation of separate debug file
 void StressSocial::write_distribution()
 {
+    // Separate debug file: same base name +"_distribution"
     std::ofstream data_file2{param.file_name + "_distribution"};
+    
+    if (!data_file2) {
+        std::cerr << "Could not open distribution output file: "
+                  << param.file_name + "_distribution" << "\n";
+        return;
+    }
 
-    // print out all the values of all the individuals
+    // Header row
+    data_file2 << "time_step;"
+               << "patch_index;"
+               << "breeder_index;"
+               << "is_alive;"
+               << "is_attacked;"
+               << "predator_patch;"
+               << "V;"
+               << "v0;v1;"
+               << "baseline_influx0;baseline_influx1;"
+               << "stress_influx0;stress_influx1;"
+               << "vigilance_influx0;vigilance_influx1;"
+               << "removal0;removal1;"
+               << "damage;"
+               << "stress_hormone"
+               << '\n';
+
+    // Loop over all patches and all breeders
+    for (unsigned patch_idx = 0; patch_idx < metapopulation.size(); ++patch_idx) {
+        const Patch &patch = metapopulation[patch_idx];
+
+        for (unsigned breeder_idx = 0;
+             breeder_idx < patch.breeders.size();
+             ++breeder_idx) {
+
+            const Individual &ind = patch.breeders[breeder_idx];
+
+            data_file2 << time_step << ";"
+                       << patch_idx << ";"
+                       << breeder_idx << ";"
+                       << ind.is_alive << ";"
+                       << ind.is_attacked << ";"
+                       << patch.predator_patch << ";"
+                       << patch.V << ";"
+                       << ind.v[0] << ";"
+                       << ind.v[1] << ";"
+                       << ind.baseline_influx[0] << ";"
+                       << ind.baseline_influx[1] << ";"
+                       << ind.stress_influx[0] << ";"
+                       << ind.stress_influx[1] << ";"
+                       << ind.vigilance_influx[0] << ";"
+                       << ind.vigilance_influx[1] << ";"
+                       << ind.removal[0] << ";"
+                       << ind.removal[1] << ";"
+                       << ind.damage << ";"
+                       << ind.stress_hormone
+                       << '\n';
+        }
+    }
+
 }
  
 void StressSocial::write_data_headers()
