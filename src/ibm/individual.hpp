@@ -17,7 +17,7 @@ class Individual
         double removal[2]{0.0,0.0};
 
 // TODO EG: Evolvable baseline vigilance alleles (a_v). No b_stressvigilance trait yet as v is baseline only
-        double v[2]{0.0,0.0}; // vigilance
+        double v[2]{0.0,0.0}; // baeline vigilance alleles
 
         // state variables
         double damage{0.0}; // 
