@@ -45,10 +45,11 @@ StressSocial::StressSocial(Parameters const &parvals) :
 for (time_step = 0; time_step < param.max_time; ++time_step)
 {
 
-      // at start of first time step, write out all individuals
-      if (time_step == 0) {
-          write_distribution();
-          }
+      // at start of first time step, write out all individuals - comment out if other section for first "iffy" timestep is included
+      // if (time_step == 0) {
+      //    write_distribution();
+      //    }
+      
       // reset counters at the start of each timestep
         n_attacked = 0; 
         n_death_damage = 0;
@@ -309,6 +310,26 @@ void StressSocial::write_data()
     unsigned int ntotal = param.npatches * param.n;
 
     assert(ntotal >= n_death_damage + n_death_predator); //error checking as ntotal should always be greater
+    
+    // EG ADD: Dump distribution on first "iffy" non-finite damage/stress summary
+    static bool debug_dump_done = false;
+    
+    if (!debug_dump_done &&
+        (!std::isfinite(mean_damage) ||
+         !std::isfinite(var_damage) ||
+         !std::isfinite(mean_stress_hormone) ||
+         !std::isfinite(var_stress_hormone)))
+    {
+        debug_dump_done = true;
+
+        std::cerr << "DEBUG: non-finite damage/stress summary at timestep "
+                  << time_step << " — writing distribution\n";
+
+        write_distribution();  // uses current time_step and state
+
+        // Optional: bail out immediately once things go bad
+        // std::exit(1);
+    }
 
     data_file << time_step << ";"
         << seed << ";"
