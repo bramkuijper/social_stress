@@ -34,47 +34,47 @@ StressSocial::StressSocial(Parameters const &parvals) :
     ,data_file{param.file_name} // File where output is written
     ,last_total_global_fecundity{0.0} // total fecundity across all patches last timestep
 {
-
     write_data_headers();
 
     // make some patches P and some NP
     initialize_patches();
 
-// now run the thing (with EG FIXES to update predator presence/absence for each patch before
-// EG added writing of distribution to new file at time_step == 0 
-for (time_step = 0; time_step < param.max_time; ++time_step)
-{
-
-      // at start of first time step, write out all individuals - comment out if other section for first "iffy" timestep is included
-      // if (time_step == 0) {
-      //    write_distribution();
-      //    }
-      
-      // reset counters at the start of each timestep
-        n_attacked = 0; 
-        n_death_damage = 0;
-        n_death_predator = 0;
-
-      // effectively, we want the predator to visit some patches
-      // and to attack individuals there.
-        
-        switch_predator_status();
-
-        predator_visit();
-        survive_damage_vigilance();
-        reproduce();
-        update_stress_hormone();
-    
-       // error checking: ntotal should always be >= each death count - simplified from previous version
-        assert(param.n * param.npatches >= n_death_damage); // total pop >= deaths from damage
-        assert(param.n * param.npatches >= n_death_predator); // total pop >= deaths from predation
-        assert(param.n * param.npatches >= n_death_damage + n_death_predator); // total pop >= total deaths
-
-    if (time_step % param.data_output_interval == 0)
+    // now run the thing (with EG FIXES to update predator presence/absence for each patch before
+    // EG added writing of distribution to new file at time_step == 0 
+    for (time_step = 0; time_step < param.max_time; ++time_step)
     {
-        write_data();
-    }
-}
+          // at start of first time step, write out all individuals - comment out if other section for first "iffy" timestep is included
+          // if (time_step == 0) {
+          //    write_distribution();
+          //    }
+          
+          // reset counters at the start of each timestep
+            n_attacked = 0; 
+            n_death_damage = 0;
+            n_death_predator = 0;
+
+          // effectively, we want the predator to visit some patches
+          // and to attack individuals there.
+            
+            switch_predator_status();
+
+            predator_visit();
+            survive_damage_vigilance();
+            reproduce();
+            update_stress_hormone();
+        
+           // error checking: ntotal should always be >= each death count - simplified from previous version
+            assert(param.n * param.npatches >= n_death_damage); // total pop >= deaths from damage
+            assert(param.n * param.npatches >= n_death_predator); // total pop >= deaths from predation
+            assert(param.n * param.npatches >= n_death_damage + n_death_predator); // total pop >= total deaths
+        
+            if (time_step % param.data_output_interval == 0)
+            {
+                write_data();
+                write_distribution();
+            }
+    } // end for time_step
+    
     write_parameters();
 } // end StressSocial constructor
 
@@ -311,26 +311,6 @@ void StressSocial::write_data()
 
     assert(ntotal >= n_death_damage + n_death_predator); //error checking as ntotal should always be greater
     
-    // EG ADD: Dump distribution on first "iffy" non-finite damage/stress summary
-    static bool debug_dump_done = false;
-    
-    if (!debug_dump_done &&
-        (!std::isfinite(mean_damage) ||
-         !std::isfinite(var_damage) ||
-         !std::isfinite(mean_stress_hormone) ||
-         !std::isfinite(var_stress_hormone)))
-    {
-        debug_dump_done = true;
-
-        std::cerr << "DEBUG: non-finite damage/stress summary at timestep "
-                  << time_step << " — writing distribution\n";
-
-        write_distribution();  // uses current time_step and state
-
-        // Optional: bail out immediately once things go bad
-        // std::exit(1);
-    }
-
     data_file << time_step << ";"
         << seed << ";"
         << meanv << ";" 
@@ -468,28 +448,30 @@ void StressSocial::survive_damage_vigilance()
                 breeder_idx < metapop_iter->breeders.size();
                 ++breeder_idx)
         {
-	if (metapop_iter->breeders[breeder_idx].is_alive)
-	{
-            d = metapop_iter->breeders[breeder_idx].damage;
-
-    // EG FIX: use expressed vigilance phenotype (bounded [0,1])
-            double v = effective_vigilance(metapop_iter->breeders[breeder_idx]);
-
-            if (uniform(rng_r) < 1.0 - mu(d, v))
+            if (metapop_iter->breeders[breeder_idx].is_alive)
             {
-                // note that mortality due to lack of vigilance
-                // is elsewhere, namely in predator_visit()
-                // individual does not survive
-	    metapop_iter->breeders[breeder_idx].is_alive = true;
-            }
-            else
-            {
-                ++n_death_damage;
-	    	metapop_iter->breeders[breeder_idx].is_alive = false;
-	    }
-	}
-	}
-    }
+                    d = metapop_iter->breeders[breeder_idx].damage;
+
+                    assert(std::isfinite(d));
+
+            // EG FIX: use expressed vigilance phenotype (bounded [0,1])
+                    double v = effective_vigilance(metapop_iter->breeders[breeder_idx]);
+
+                    if (uniform(rng_r) < 1.0 - mu(d, v))
+                    {
+                        // note that mortality due to lack of vigilance
+                        // is elsewhere, namely in predator_visit()
+                        // individual does not survive
+                metapop_iter->breeders[breeder_idx].is_alive = true;
+                    }
+                    else
+                    {
+                        ++n_death_damage;
+                    metapop_iter->breeders[breeder_idx].is_alive = false;
+                }
+            } // end if metapop_iter
+        } // end for unsigned breeder_idx
+    } // for end metapop_iter 
 } // end survival_damage()
 
 
@@ -698,7 +680,8 @@ void StressSocial::write_parameters()
 // update the stress hormone level for each individual
 void StressSocial::update_stress_hormone()
 {
-    double stress_hormone_tplus1, stress_hormone, r, stress_influx, vigilance_influx, baseline_influx, damage,damage_tplus1;
+    double stress_hormone_tplus1, stress_hormone, r, stress_influx, 
+           vigilance_influx, baseline_influx, damage,damage_tplus1;
 
     // calculate a mean fecundity distribution
     for (auto metapop_iter = metapopulation.begin();
@@ -712,10 +695,17 @@ void StressSocial::update_stress_hormone()
                 ++breeder_iter)
         {
             r = breeder_iter->removal[0] + breeder_iter->removal[1];
-            baseline_influx = breeder_iter->baseline_influx[0] + breeder_iter->baseline_influx[1];
-            stress_influx = breeder_iter->stress_influx[0] + breeder_iter->stress_influx[1];
-            vigilance_influx = breeder_iter->vigilance_influx[0] + breeder_iter->vigilance_influx[1];
+            baseline_influx = breeder_iter->baseline_influx[0] 
+                + breeder_iter->baseline_influx[1];
+
+            stress_influx = breeder_iter->stress_influx[0] 
+                + breeder_iter->stress_influx[1];
+
+            vigilance_influx = breeder_iter->vigilance_influx[0] 
+                + breeder_iter->vigilance_influx[1];
+
             damage = breeder_iter->damage;
+
             stress_hormone = breeder_iter->stress_hormone;
 
             stress_hormone_tplus1 = (1.0 - r) * stress_hormone + 
@@ -726,7 +716,8 @@ void StressSocial::update_stress_hormone()
 // TODO EG: add v=f(stress) here
 
             // d(t+1) = (1-g)d + k(h - theta_h)^2
-            damage_tplus1 = (1.0 - param.g) * damage + param.k * (stress_hormone - param.theta_hormone) * (stress_hormone - param.theta_hormone);
+            damage_tplus1 = (1.0 - param.g) * damage + 
+                param.k * (stress_hormone - param.theta_hormone) * (stress_hormone - param.theta_hormone);
 
             // undo the is_attacked variable, ready for the next time step
             breeder_iter->is_attacked = false;

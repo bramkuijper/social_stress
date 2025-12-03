@@ -26,7 +26,7 @@ Individual::Individual(
                 Individual const &mum,
                 Individual const &dad,
                 Parameters const &param,
-                std::mt19937 &rng_r)
+                std::mt19937 &rng_r) 
 {
     std::bernoulli_distribution segregator{0.5};
 
@@ -66,7 +66,24 @@ Individual::Individual(
 
 
     // updating the state variables
+    // this is equilibrium of:
+    // s(t+1) == s(t) * (1-r) + baseline_influx, when solving for
+    // s(t+1) == s(t) == s
     stress_hormone = (baseline_influx[0] + baseline_influx[1])/(removal[0] + removal[1]);
+
+    // if there is no removal 
+    if (removal[0] + removal[1] == 0)
+    {
+        stress_hormone = param.hmax;
+    }
+
+    // if stress hormone exceeds hmax then bring it back to it
+    // for example, this happens when removal is not 0, but
+    // v close to it.
+    if (stress_hormone > param.hmax)
+    {
+        stress_hormone = param.hmax;
+    }
 
     // damage is 0 as per the default
 
