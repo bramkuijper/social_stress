@@ -71,7 +71,7 @@ StressSocial::StressSocial(Parameters const &parvals) :
             if (time_step % param.data_output_interval == 0)
             {
                 write_data();
-                write_distribution();
+                // write_distribution(); // debug only
             }
     } // end for time_step
     
