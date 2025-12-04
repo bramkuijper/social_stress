@@ -55,6 +55,7 @@ class Parameters
 
         double init_v{0.0};
         double init_stress_hormone_level{0.0};
+        double init_removal{0.1}; // EG add default starting removal value
 
         // base name for the file
         std::string file_name{"sim_stress_social"};

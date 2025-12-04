@@ -6,7 +6,11 @@
 Individual::Individual(Parameters const &params) :
     v{params.init_v/2, params.init_v/2},
     stress_hormone{params.init_stress_hormone_level}
-{}
+{
+    // EG add - initialising removal alleles
+    removal[0] = params.init_removal;
+    removal[1] = params.init_removal;
+}
 
 // copy constructor
 Individual::Individual(Individual const &other) :

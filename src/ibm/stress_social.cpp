@@ -667,6 +667,7 @@ void StressSocial::write_parameters()
         << "survival_power;" << param.survival_power << ";" << std::endl
         << "init_v;" << param.init_v << ";" << std::endl
         << "init_stress_hormone_level;" << param.init_stress_hormone_level << ";" << std::endl
+        << "init_removal;" << param.init_removal << ";" << std::endl // EG add removal to output
         << "mu_baseline;" << param.mu_baseline << ";" << std::endl
         << "mu_stress_influx;" << param.mu_stress_influx << ";" << std::endl
         << "mu_vigilance_influx;" << param.mu_vigilance_influx << ";" << std::endl
