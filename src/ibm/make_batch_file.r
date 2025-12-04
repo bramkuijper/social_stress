@@ -1,5 +1,11 @@
 #!/usr/bin/env Rscript
 
+options(repos = c(CRAN = "https://cloud.r-project.org"))
+if (!requireNamespace("datetime", quietly = TRUE)) {
+  install.packages("datetime")
+}
+install.packages("lubridate")
+
 library(datetime)
 library(lubridate)
 
