@@ -189,7 +189,7 @@ void StressSocial::write_distribution()
 void StressSocial::write_data_headers()
 
 {
-	data_file << "time;seed;meanv;varv;"
+	data_file << "time;meanv;varv;"
             << "mean_baseline_influx;var_baseline_influx;"
             << "mean_stress_influx;var_stress_influx;"
             << "mean_vigilance_influx;var_vigilance_influx;"
@@ -312,7 +312,6 @@ void StressSocial::write_data()
     assert(ntotal >= n_death_damage + n_death_predator); //error checking as ntotal should always be greater
     
     data_file << time_step << ";"
-        << seed << ";"
         << meanv << ";" 
         << varv << ";" 
         << mean_baseline_influx << ";"
