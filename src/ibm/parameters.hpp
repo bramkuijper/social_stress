@@ -22,7 +22,7 @@ class Parameters
 
         unsigned data_output_interval{1};
 
-        // first element female, second element male
+        // population size (no sex differences)
         unsigned n{20};
 
         // dispersal
