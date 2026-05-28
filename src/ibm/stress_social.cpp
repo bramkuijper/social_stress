@@ -40,7 +40,7 @@ StressSocial::StressSocial(Parameters const &parvals) :
     initialize_patches();
 
     // now run the thing (with EG FIXES to update predator presence/absence for each patch before
-    // EG added writing of distribution to new file at time_step == 0 
+    // writing of distribution to new file at time_step == 0 
     for (time_step = 0; time_step < param.max_time; ++time_step)
     {
           // at start of first time step, write out all individuals - comment out if other section for first "iffy" timestep is included
@@ -92,7 +92,7 @@ void StressSocial::initialize_patches()
     }
 }
 
-// EG FIX: update whether each patch has a predator, once per timestep
+// update whether each patch has a predator, once per timestep
 // Uses s[NP] (NP -> P) and s[P] (P -> NP)
 
 void StressSocial::switch_predator_status()
@@ -122,7 +122,7 @@ void StressSocial::switch_predator_status()
 }
 
 // print out the distribution/values of all the individuals
-// EG added: creation of separate debug file
+// creation of separate debug file
 void StressSocial::write_distribution()
 {
     // Separate debug file: same base name +"_distribution"
@@ -198,10 +198,11 @@ void StressSocial::write_data_headers()
             << "mean_stress_hormone;var_stress_hormone;"
             << "total_global_fecundity;"
             << "predator_presence_fraction;" // addition of predator presence fraction in output
-            << "n_attacked;n_death_damage;n_death_predator;ntotalalive" 
+            << "mean_group_V;" // mean group vigilance
+            << "n_attacked;n_death_damage;n_death_predator;attack_death_fraction;ntotalalive" 
             << std::endl;
             
-            // EG NOTE: mean_vigilance column is the expressed vigilance phenotype
+            // Note: mean_vigilance column is the expressed vigilance phenotype
             // effective_vigilance() = 0.5*(v0+v1) clamped to [0,1], not raw sum of alleles
             
 }	
@@ -238,13 +239,14 @@ void StressSocial::write_data()
     double mean_stress_hormone {0.0}; // mean stress hormone
     double ss_stress_hormone {0.0}; // sum of squares stress hormone
     double var_stress_hormone {0.0}; // variance in stress hormone
-    double predator_presence_fraction = 0.0; // track predator presence across patches
+    double predator_presence_fraction {0.0}; // track predator presence across patches
+    double mean_group_V {0.0}; // mean group vigilance
 
     for (auto &patch : metapopulation) {
         for (auto &breeder : patch.breeders) {
 
-    // EG FIX: record diploid trait values as average of the two alleles
-    // EG FIX: Use expressed vigilance phenotype (0.5*(v0+v1, clamped)
+    // record diploid trait values as average of the two alleles
+    // use expressed vigilance phenotype (0.5*(v0+v1, clamped)
             double vigilance = effective_vigilance(breeder); 
             double baseline_influx = 0.5 * (breeder.baseline_influx[0] + breeder.baseline_influx[1]);
             double stress_influx = 0.5 * (breeder.stress_influx[0] + breeder.stress_influx[1]);
@@ -278,16 +280,22 @@ void StressSocial::write_data()
         }
     }
     
-    // EG FIX: Fraction of patches with predator present this timestep - needed in output
+    // fraction of patches with predator present this timestep - needed in output
     int predator_patches = 0;
     for (const auto &patch : metapopulation) {
         if (patch.predator_patch) ++predator_patches;
     }
     predator_presence_fraction =
         static_cast<double>(predator_patches) / param.npatches;
+        
+    // mean group vigilance across patches
+    for (const auto &patch : metapopulation) {
+        mean_group_V += patch.V;
+    }
+
+    mean_group_V /= param.npatches;
 
     // Calculate mean
-    
         if (total_individuals > 0) {
         meanv /= total_individuals;
         mean_baseline_influx /= total_individuals;
@@ -306,6 +314,13 @@ void StressSocial::write_data()
     var_removal = (total_individuals > 0) ? (ss_removal / total_individuals - mean_removal * mean_removal) : 0.0;
     var_damage = (total_individuals > 0) ? (ss_damage / total_individuals - mean_damage * mean_damage) : 0.0;
     var_stress_hormone = (total_individuals > 0) ? (ss_stress_hormone/ total_individuals - mean_stress_hormone * mean_stress_hormone) : 0.0;
+
+    double attack_death_fraction = 0.0;
+    
+    if (n_attacked > 0)
+    {
+        attack_death_fraction = static_cast<double>(n_death_predator) / n_attacked;
+    }
 
     unsigned int ntotal = param.npatches * param.n;
 
@@ -327,13 +342,14 @@ void StressSocial::write_data()
         << mean_stress_hormone << ";"
         << var_stress_hormone << ";" 
         << last_total_global_fecundity << ";"
-        << predator_presence_fraction << ";" // addition
+        << predator_presence_fraction << ";"
+        << mean_group_V << ";"
         << n_attacked << ";"
         << n_death_damage << ";"
         << n_death_predator << ";"
+        << attack_death_fraction << ";"
         << (ntotal - n_death_damage - n_death_predator)
-        << '\n'; // EG fix issue with semicolon stuck after death info 
-
+        << '\n';
 }
 
 
@@ -356,7 +372,8 @@ void StressSocial::predator_visit()
             // check whether at least one individual is vigilant
             V = calculate_group_vigilance(*metapop_iter);
 
-            // calculate the probability that nobody is vigilant
+            // calculate the probability that nobody is vigilant - attacks happen when no group members are vigilant
+            // higher value of V = fewer attacks
             if (uniform(rng_r) < 1.0 - V && 
                     uniform(rng_r) < param.p_attack)
             {
@@ -366,7 +383,21 @@ void StressSocial::predator_visit()
                 metapop_iter->breeders[random_breeder_idx].is_attacked = true;
 
                 ++n_attacked;
-
+                
+                // debug: checking why all attacked individuals die
+                if (time_step == 100 ||
+                    time_step == 1000 ||
+                    (time_step >= 10000 && time_step % 10000 == 0))
+                {                
+                std::cout << time_step
+                          << " h "
+                          << metapop_iter->breeders[random_breeder_idx].stress_hormone
+                          << " attack_survival "
+                          << attack_survival(
+                                metapop_iter->breeders[random_breeder_idx].stress_hormone)
+                          << std::endl;
+                }
+   
                 if (
                         uniform(rng_r) < 
                             attack_survival(metapop_iter->breeders[random_breeder_idx].stress_hormone))
@@ -388,7 +419,7 @@ void StressSocial::predator_visit()
         }
         else
         {
-            // EG FIX: patch has no predator this timestep
+            // patch has no predator this timestep
             // set V explicitly to 0.0 so it’s always initialised
             metapop_iter->V = 0.0;
         }
@@ -416,12 +447,12 @@ double StressSocial::calculate_group_vigilance(Patch const &current_patch)
             ++breeder_iter)
     {
 
-    // EG FIX: Use expressed vigilance phenotype (bounded [0,1])
+    // Use expressed vigilance phenotype (bounded [0,1])
         double v_eff = effective_vigilance(*breeder_iter);
         prob_none_vigilant = prob_none_vigilant * (1.0 - v_eff);
     }
 
-    // ok, now the probability that none of the individuals 
+    // the probability that none of the individuals 
     // are vigilant is now calculated after this loop.
     //
     // from this, we can then get the probability that
@@ -453,8 +484,9 @@ void StressSocial::survive_damage_vigilance()
 
                     assert(std::isfinite(d));
 
-            // EG FIX: use expressed vigilance phenotype (bounded [0,1])
+            // use expressed vigilance phenotype (bounded [0,1])
                     double v = effective_vigilance(metapop_iter->breeders[breeder_idx]);
+
 
                     if (uniform(rng_r) < 1.0 - mu(d, v))
                     {
@@ -465,6 +497,21 @@ void StressSocial::survive_damage_vigilance()
                     }
                     else
                     {
+                      if (time_step == 100 ||
+                          time_step == 1000 ||
+                          (time_step >= 10000 && time_step % 10000 == 0))
+                      {
+                          std::cout << time_step
+                                    << " DAMAGE_DEATH "
+                                    << "damage "
+                                    << d
+                                    << " vigilance "
+                                    << v
+                                    << " attacked "
+                                    << metapop_iter->breeders[breeder_idx].is_attacked
+                                    << std::endl;
+                      }
+                                  
                         ++n_death_damage;
                     metapop_iter->breeders[breeder_idx].is_alive = false;
                 }
@@ -479,6 +526,7 @@ double StressSocial::mu(
         double const damage,
         double const vigilance)
 {
+    // mortality costs associated with 
     double mortality_prob{param.m0 + param.md * damage / param.dmax + param.mv * vigilance};
 
     return(mortality_prob);
@@ -521,7 +569,8 @@ void StressSocial::reproduce()
             // calculate 1 - v^x
 
             double v_eff = effective_vigilance(*breeder_iter);
-    // EG FIX: fecundity cost uses expressed vigilance phenotype (bounded [0,1])
+            
+    // fecundity cost uses expressed vigilance phenotype (bounded [0,1])
             individual_fecundity = 1.0 - std::pow(v_eff, param.fecundity_power);
 
 
@@ -545,7 +594,7 @@ void StressSocial::reproduce()
         group_level_fecundities.push_back(group_level_fecundity);
         
 
-        // FIX EG: accumulate global fecundity across all patches so that migration works
+        // accumulate global fecundity across all patches so that migration works
         total_global_fecundity += group_level_fecundity;
 
     }
@@ -575,7 +624,7 @@ void StressSocial::reproduce()
     {
         total_local_fecundity = group_level_fecundities[patch_idx];
 
-        // FIX EG: total_global_fecundity is now accumulated above
+        // total_global_fecundity is now accumulated above
         // so migrant_contribution can be > 0 and immigration can actually occur 
         migrant_contribution = param.p_mig * total_global_fecundity / param.npatches;
 
@@ -608,7 +657,7 @@ void StressSocial::reproduce()
                 }
 
                 // we know the patch, now which parent
-                // first pick mom
+                // first pick mum
                 mum_idx = metapopulation[
                     patch_producing_new_offspring_idx].within_patch_fecundity_distribution(rng_r);
 
@@ -630,7 +679,7 @@ void StressSocial::reproduce()
                 assert(Kid.v[0] >= 0);
                 assert(Kid.v[0] <= 1.0);
 
-                // fill the vacancy with new kid
+                // fill the vacancy with new offspring
                 *breeder_iter = Kid;
                 
                 assert(breeder_iter->v[0] >= 0);
@@ -640,7 +689,7 @@ void StressSocial::reproduce()
         } // end for breeder_iter
     } // end for patch_idx
     
-      // EG FIX: store total fecundity for reporting in write_data()
+      // store total fecundity for reporting in write_data()
       last_total_global_fecundity = total_global_fecundity;
     
 } // end StressSocial::reproduce()
