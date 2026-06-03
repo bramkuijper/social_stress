@@ -15,10 +15,11 @@ int main(int argc, char **argv)
     pars.p_mig = std::stod(argv[9]); // migration probability
     pars.p_attack = std::stod(argv[10]); // probability of being attacked when predator present
     pars.fecundity_power = std::stod(argv[11]); // power of fecundity cost of vigilance
-    pars.init_v = std::stod(argv[12]); // initial vigilance
-    pars.init_stress_hormone_level = std::stod(argv[13]); // initial stress hormone level
-    pars.g = std::stod(argv[14]); // damage removal per timestep
-    pars.k = std::stod(argv[15]); // increase in damage due to hormone != optimum
+    pars.hmax = std::stod(argv[12]); // maximum stress hormone level
+    pars.init_v = std::stod(argv[13]); // initial vigilance
+    pars.init_stress_hormone_level = std::stod(argv[14]); // initial stress hormone level
+    pars.g = std::stod(argv[15]); // damage removal per timestep
+    pars.k = std::stod(argv[16]); // increase in damage due to hormone != optimum
     
     StressSocial sim_object(pars);
 
