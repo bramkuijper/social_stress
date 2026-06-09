@@ -760,13 +760,33 @@ void StressSocial::update_stress_hormone()
             stress_hormone_tplus1 = (1.0 - r) * stress_hormone + 
                 baseline_influx +
                 breeder_iter->is_attacked * stress_influx + 
-                vigilance_influx * metapop_iter->V;
-
-// TODO EG: add v=f(stress) here
+                vigilance_influx * metapop_iter->V; // group vigilance contributes to stress hormone influx
+                
+            // clip stress hormone to biologically valid range 
+            if (stress_hormone_tplus1 < 0.0)
+            {
+                stress_hormone_tplus1 = 0.0;
+            }
+            
+            if (stress_hormone_tplus1 > param.hmax)
+            {
+                stress_hormone_tplus1 = param.hmax;
+            }
 
             // d(t+1) = (1-g)d + k(h - theta_h)^2
             damage_tplus1 = (1.0 - param.g) * damage + 
-                param.k * (stress_hormone - param.theta_hormone) * (stress_hormone - param.theta_hormone);
+                param.k * (stress_hormone_tplus1 - param.theta_hormone) * (stress_hormone_tplus1 - param.theta_hormone);
+                
+            // clip damage to biologically valid range
+            if (damage_tplus1 < 0.0)
+            {
+                damage_tplus1 = 0.0;
+            }
+            
+            if (damage_tplus1 > param.dmax)
+            {
+                damage_tplus1 = param.dmax;
+            }
 
             // undo the is_attacked variable, ready for the next time step
             breeder_iter->is_attacked = false;
