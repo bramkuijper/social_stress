@@ -372,10 +372,11 @@ void StressSocial::predator_visit()
             // check whether at least one individual is vigilant
             V = calculate_group_vigilance(*metapop_iter);
 
-            // calculate the probability that nobody is vigilant - attacks happen when no group members are vigilant
-            // higher value of V = fewer attacks
-            if (uniform(rng_r) < 1.0 - V && 
-                    uniform(rng_r) < param.p_attack)
+            // predator attacks with probability p_attack when predators are present
+            // EG UPDATE: group vigilance V now affects survival during attack,
+            // rather than preventing the attack from happening 
+            if (uniform(rng_r) < param.p_attack)
+                    
             {
                 // then sample which individual will die
                 random_breeder_idx = take_random_breeder(rng_r);
@@ -400,10 +401,13 @@ void StressSocial::predator_visit()
    
                 if (
                         uniform(rng_r) < 
+                            V + (1.0 - V) *
                             attack_survival(metapop_iter->breeders[random_breeder_idx].stress_hormone))
                 {
                     // we need to implement that individuals can flee the attack 
                     // dependent on their stress hormone level h
+                    // EG UPDATE: Survival combines group vigilance and hormone-mediated survival
+                    // V protects first, if vigilance does not protect, survival depends on stress hormone h
                     metapop_iter->breeders[random_breeder_idx].is_alive = true;
                 }
                 else
