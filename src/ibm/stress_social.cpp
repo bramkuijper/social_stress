@@ -715,6 +715,7 @@ void StressSocial::reproduce()
 
 
 // write parameters to file
+// added in group and population size
 void StressSocial::write_parameters() 
 {
     data_file << std::endl
@@ -723,6 +724,8 @@ void StressSocial::write_parameters()
         << "time_step;" << time_step << ";" << std::endl
         << "dispersal;" << param.p_mig << ";" << std::endl
         << "npatches;" << param.npatches << ";" << std::endl
+        << "n;" << param.n << ";" << std::endl
+        << "ntotal;" << param.npatches * param.n << ";" << std::endl
         << "s_np;" << param.s[NP] << ";" << std::endl
         << "s_p;" << param.s[P] << ";" << std::endl
         << "p_attack;" << param.p_attack << ";" << std::endl
