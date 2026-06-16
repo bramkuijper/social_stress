@@ -58,6 +58,7 @@ Individual::Individual(
     removal[1] = mutate(dad.removal[segregator(rng_r)], param.mu_removal, param.sdmu, rng_r);
     removal[1] = std::clamp(removal[1], 0.0, 1.0);
 
+    // In no-vigilance baseline model this should be 0 as long as parents are zero and param.mu_v = 0 but should be checked if not working
     v[0] = mutate(mum.v[segregator(rng_r)], param.mu_v, param.sdmu, rng_r);
     v[0] = std::clamp(v[0], 0.0, 1.0);
     v[1] = mutate(dad.v[segregator(rng_r)], param.mu_v, param.sdmu, rng_r);

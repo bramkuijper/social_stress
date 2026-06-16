@@ -63,13 +63,13 @@ class Parameters
         // mutation rates
         double mu_baseline{0.01};
         double mu_stress_influx{0.01};
-        double mu_vigilance_influx{0.01};
+        double mu_vigilance_influx{0.0}; // Mutation rate for vigilance-driven stress influx - set to 0.0 in no-vigilance benchmark runs
         double mu_removal{0.01};
-        double mu_v{0.01};
+        double mu_v{0.0}; // Mutation rate for baseline vigilance - set to 0.0 in no-vigilance benchmark runs so vigilance can't evolve
         double sdmu{0.01};
 
         // mortality rates 
-        double m0{0.1};
+        double m0{0.001}; // 1/1000 mortality
         double md{1.0}; // weighting of damage-related mortality
         double mv{1.0}; // weighting of vigilance-investment-related mortality
         
