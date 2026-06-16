@@ -45,13 +45,17 @@ class StressSocial
         // data file for output 
         std::ofstream data_file;
         
-        // EG FIX: store total fecundity across all patches for the last timestep for printing
+        // Store total fecundity across all patches for the last timestep for printing
         double last_total_global_fecundity;
 
         // some data members to keep track of numbers of attacks, mortalities etc
         unsigned int n_attacked{0};
         unsigned int n_death_damage{0};
         unsigned int n_death_predator{0};
+        
+        // Sum of damage values for individuals that die during damage mortality.
+        // Reset each timestep, then divided by n_death_damage for output.
+        double sum_damage_at_damage_death{0.0};
 
         // functions for the life cycle: survival, replacement, etc
         void initialize_patches();

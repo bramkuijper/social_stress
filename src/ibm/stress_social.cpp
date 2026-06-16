@@ -52,6 +52,7 @@ StressSocial::StressSocial(Parameters const &parvals) :
             n_attacked = 0; 
             n_death_damage = 0;
             n_death_predator = 0;
+            sum_damage_at_damage_death = 0.0;
 
           // effectively, we want the predator to visit some patches
           // and to attack individuals there.
@@ -199,7 +200,8 @@ void StressSocial::write_data_headers()
             << "total_global_fecundity;"
             << "predator_presence_fraction;" // addition of predator presence fraction in output
             << "mean_group_V;" // mean group vigilance
-            << "n_attacked;n_death_damage;n_death_predator;attack_death_fraction;ntotalalive" 
+            << "n_attacked;n_death_damage;mean_damage_at_damage_death;"
+            << "n_death_predator;attack_death_fraction;ntotalalive"  
             << std::endl;
             
             // Note: mean_vigilance column is the expressed vigilance phenotype
@@ -321,6 +323,16 @@ void StressSocial::write_data()
     {
         attack_death_fraction = static_cast<double>(n_death_predator) / n_attacked;
     }
+    
+    // Mean damage among individuals that died from damage this timestep.
+    // If no individuals died from damage, leave as 0.0.
+    double mean_damage_at_damage_death = 0.0;
+    
+    if (n_death_damage > 0)
+    {
+        mean_damage_at_damage_death =
+            sum_damage_at_damage_death / n_death_damage;
+}
 
     unsigned int ntotal = param.npatches * param.n;
 
@@ -346,6 +358,7 @@ void StressSocial::write_data()
         << mean_group_V << ";"
         << n_attacked << ";"
         << n_death_damage << ";"
+        << mean_damage_at_damage_death << ";"
         << n_death_predator << ";"
         << attack_death_fraction << ";"
         << (ntotal - n_death_damage - n_death_predator)
@@ -511,6 +524,11 @@ void StressSocial::survive_damage_vigilance()
                                     << metapop_iter->breeders[breeder_idx].is_attacked
                                     << std::endl;
                       }
+                        
+                        // Record the individual's damage immediately before it dies from
+                        // damage-related mortality. This is accumulated across all such deaths
+                        // during the timestep and converted to a mean in write_data().
+                        sum_damage_at_damage_death += d;
                                   
                         ++n_death_damage;
                     metapop_iter->breeders[breeder_idx].is_alive = false;
