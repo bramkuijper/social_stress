@@ -77,6 +77,9 @@ class Parameters
         double g{0.1}; // removal of damage per timestep
         double k{0.1}; // increase in damage due to hormone != optimum
         double theta_hormone{1}; // optimal hormone level
+        
+        // whether vigilance is enabled in this simulation - existing behaviour is default
+        bool vigilance{true};
 };
 
 #endif

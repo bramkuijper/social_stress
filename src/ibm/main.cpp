@@ -1,8 +1,24 @@
 #include <cassert>
+#include <iostream>
 #include "stress_social.hpp"
+
+
 
 int main(int argc, char **argv)
 {
+
+    if (argc != 18)
+    {
+        std::cerr
+            << "Usage: " << argv[0]
+            << " file_name npatches n max_time s_np s_p md mv"
+            << " p_mig p_attack fecundity_power hmax init_v"
+            << " init_stress_hormone g k vigilance\n"
+            << "vigilance must be 1 (on) or 0 (off)\n";
+    
+        return 1;
+    }
+
     Parameters pars; // Assigning parameter order
     pars.file_name = argv[1]; // file name
     pars.npatches = std::stoi(argv[2]); // number of patches
@@ -20,7 +36,9 @@ int main(int argc, char **argv)
     pars.init_stress_hormone_level = std::stod(argv[14]); // initial stress hormone level
     pars.g = std::stod(argv[15]); // damage removal per timestep
     pars.k = std::stod(argv[16]); // increase in damage due to hormone != optimum
+    pars.vigilance = std::stoi(argv[17]) != 0; // vigilance on/off: 1 = on, 0 = off
     
     StressSocial sim_object(pars);
+    return 0;
 
 }

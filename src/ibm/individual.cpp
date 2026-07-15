@@ -4,7 +4,10 @@
 
 // main constructor
 Individual::Individual(Parameters const &params) :
-    v{params.init_v/2, params.init_v/2},
+    v{
+        params.vigilance ? params.init_v / 2.0 : 0.0,
+        params.vigilance ? params.init_v / 2.0 : 0.0
+    },
     stress_hormone{params.init_stress_hormone_level}
 {
     // EG add - initialising removal alleles
@@ -46,23 +49,44 @@ Individual::Individual(
     stress_influx[1] = mutate(dad.stress_influx[segregator(rng_r)], param.mu_stress_influx, param.sdmu, rng_r);
     stress_influx[1] = std::clamp(stress_influx[1], 0.0, param.hmax/2.0);
     
-    vigilance_influx[0] = mutate(mum.vigilance_influx[segregator(rng_r)], param.mu_vigilance_influx, param.sdmu, rng_r);
-    vigilance_influx[0] = std::clamp(vigilance_influx[0], 0.0, param.hmax/2.0);
-
-    vigilance_influx[1] = mutate(dad.vigilance_influx[segregator(rng_r)], param.mu_vigilance_influx, param.sdmu, rng_r);
-    vigilance_influx[1] = std::clamp(vigilance_influx[1], 0.0, param.hmax/2.0);
     
+    if (param.vigilance)
+    {
+        vigilance_influx[0] = mutate(mum.vigilance_influx[segregator(rng_r)], param.mu_vigilance_influx, param.sdmu, rng_r);
+        vigilance_influx[0] = std::clamp(vigilance_influx[0], 0.0, param.hmax/2.0);
+      
+        vigilance_influx[1] = mutate(dad.vigilance_influx[segregator(rng_r)], param.mu_vigilance_influx, param.sdmu, rng_r);
+        vigilance_influx[1] = std::clamp(vigilance_influx[1], 0.0, param.hmax/2.0);
+    
+    }
+      else
+      {
+      
+        vigilance_influx[0] = 0.0;
+        vigilance_influx[1] = 0.0;
+      
+      }
+      
     removal[0] = mutate(mum.removal[segregator(rng_r)], param.mu_removal, param.sdmu, rng_r);
     removal[0] = std::clamp(removal[0], 0.0, 1.0);
 
     removal[1] = mutate(dad.removal[segregator(rng_r)], param.mu_removal, param.sdmu, rng_r);
     removal[1] = std::clamp(removal[1], 0.0, 1.0);
 
-    // In no-vigilance baseline model this should be 0 as long as parents are zero and param.mu_v = 0 but should be checked if not working
-    v[0] = mutate(mum.v[segregator(rng_r)], param.mu_v, param.sdmu, rng_r);
-    v[0] = std::clamp(v[0], 0.0, 1.0);
-    v[1] = mutate(dad.v[segregator(rng_r)], param.mu_v, param.sdmu, rng_r);
-    v[1] = std::clamp(v[1], 0.0, 1.0);
+    // If vigilance disabled, vigilance alleles fixed at zero
+    if (param.vigilance)
+    {
+    
+      v[0] = mutate(mum.v[segregator(rng_r)], param.mu_v, param.sdmu, rng_r);
+      v[0] = std::clamp(v[0], 0.0, 1.0);
+      v[1] = mutate(dad.v[segregator(rng_r)], param.mu_v, param.sdmu, rng_r);
+      v[1] = std::clamp(v[1], 0.0, 1.0);
+    }
+    else
+    {
+      v[0] = 0.0;
+      v[1] = 0.0;
+    }    
     
       // EG NOTE: Evolvable baseline vigilance alleles (a_v).
       // No b_stress?vigilance trait yet – vigilance is baseline-only.

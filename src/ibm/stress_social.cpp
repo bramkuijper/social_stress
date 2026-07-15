@@ -10,8 +10,16 @@
 #include "patch.hpp"
 #include "individual.hpp"
 
-inline double effective_vigilance(Individual const & ind)
+// vigilance can be switched on or off depending on input for sim run
+inline double effective_vigilance(
+          Individual const & ind,
+          bool const vigilance_enabled)
 {
+    if (!vigilance_enabled)
+    {
+      return 0.0;
+    }
+    
     double base_v = 0.5 * (ind.v[0] + ind.v[1]);
 
     if (base_v < 0.0) { base_v = 0.0; }
@@ -249,7 +257,7 @@ void StressSocial::write_data()
 
     // record diploid trait values as average of the two alleles
     // use expressed vigilance phenotype (0.5*(v0+v1, clamped)
-            double vigilance = effective_vigilance(breeder); 
+            double vigilance = effective_vigilance(breeder, param.vigilance); 
             double baseline_influx = 0.5 * (breeder.baseline_influx[0] + breeder.baseline_influx[1]);
             double stress_influx = 0.5 * (breeder.stress_influx[0] + breeder.stress_influx[1]);
             double vigilance_influx = 0.5 * (breeder.vigilance_influx[0] + breeder.vigilance_influx[1]);
@@ -461,7 +469,7 @@ double StressSocial::calculate_group_vigilance(Patch const &current_patch)
     {
 
     // Use expressed vigilance phenotype (bounded [0,1])
-        double v_eff = effective_vigilance(*breeder_iter);
+        double v_eff = effective_vigilance(*breeder_iter, param.vigilance);
         prob_none_vigilant = prob_none_vigilant * (1.0 - v_eff);
     }
 
@@ -498,7 +506,7 @@ void StressSocial::survive_damage_vigilance()
                     assert(std::isfinite(d));
 
             // use expressed vigilance phenotype (bounded [0,1])
-                    double v = effective_vigilance(metapop_iter->breeders[breeder_idx]);
+                    double v = effective_vigilance(metapop_iter->breeders[breeder_idx], param.vigilance);
 
 
                     if (uniform(rng_r) < 1.0 - mu(d, v))
@@ -586,7 +594,7 @@ void StressSocial::reproduce()
         {
             // calculate 1 - v^x
 
-            double v_eff = effective_vigilance(*breeder_iter);
+            double v_eff = effective_vigilance(*breeder_iter, param.vigilance);
             
     // fecundity cost uses expressed vigilance phenotype (bounded [0,1])
             individual_fecundity = 1.0 - std::pow(v_eff, param.fecundity_power);
@@ -734,9 +742,10 @@ void StressSocial::write_parameters()
         << "hmax;" << param.hmax << ";" << std::endl
         << "dmax;" << param.dmax << ";" << std::endl
         << "survival_power;" << param.survival_power << ";" << std::endl
+        << "vigilance;" << param.vigilance << ";" << std::endl // vigilance/on off written to file (0 off, 1 on)
         << "init_v;" << param.init_v << ";" << std::endl
         << "init_stress_hormone_level;" << param.init_stress_hormone_level << ";" << std::endl
-        << "init_removal;" << param.init_removal << ";" << std::endl // EG add removal to output
+        << "init_removal;" << param.init_removal << ";" << std::endl
         << "mu_baseline;" << param.mu_baseline << ";" << std::endl
         << "mu_stress_influx;" << param.mu_stress_influx << ";" << std::endl
         << "mu_vigilance_influx;" << param.mu_vigilance_influx << ";" << std::endl
