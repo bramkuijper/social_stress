@@ -80,6 +80,18 @@ class Parameters
         
         // whether vigilance is enabled in this simulation - existing behaviour is default
         bool vigilance{true};
+        
+        // whether to run the controlled end-of-simulation hormone assay
+        bool run_end_assay{false};
+
+        // number of evolved individuals sampled for the assay
+        unsigned assay_n_individuals{10};
+        
+        // number of timesteps before the standardised attack
+        unsigned assay_pre_time{25};
+        
+        // number of timesteps after the standardised attack
+        unsigned assay_post_time{100};
 };
 
 #endif

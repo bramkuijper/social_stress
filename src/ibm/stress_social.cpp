@@ -5,6 +5,9 @@
 #include <cmath>
 #include <numeric>
 #include <fstream>
+#include <vector>
+#include <algorithm>
+#include <utility>
 
 #include "stress_social.hpp"
 #include "patch.hpp"
@@ -84,7 +87,15 @@ StressSocial::StressSocial(Parameters const &parvals) :
             }
     } // end for time_step
     
+    // Optional controlled hormone assay using evolved individuals
+    if (param.run_end_assay)
+    {
+        run_end_hormone_assay();
+    }
+
+    // Write simulation parameters to the main output file
     write_parameters();
+    
 } // end StressSocial constructor
 
 // go over all the patches and initialize them as type NP or P
@@ -193,6 +204,220 @@ void StressSocial::write_distribution()
         }
     }
 
+}
+
+// Run a controlled hormone-response assay on a random sample of
+// evolved individuals after the main simulation has finished.
+void StressSocial::run_end_hormone_assay()
+{
+    // Store every possible patch/breeder location.
+    std::vector<std::pair<unsigned, unsigned>> individual_locations;
+
+    for (unsigned patch_idx = 0;
+         patch_idx < metapopulation.size();
+         ++patch_idx)
+    {
+        for (unsigned breeder_idx = 0;
+             breeder_idx < metapopulation[patch_idx].breeders.size();
+             ++breeder_idx)
+        {
+            individual_locations.push_back(
+                std::make_pair(patch_idx, breeder_idx)
+            );
+        }
+    }
+
+    // Randomise the order so that the first requested locations
+    // form a random sample without replacement.
+    std::shuffle(
+        individual_locations.begin(),
+        individual_locations.end(),
+        rng_r
+    );
+
+    unsigned n_to_sample = param.assay_n_individuals;
+
+    if (n_to_sample > individual_locations.size())
+    {
+        std::cerr
+            << "Requested "
+            << n_to_sample
+            << " assay individuals, but population contains only "
+            << individual_locations.size()
+            << ". Sampling the whole population instead.\n";
+
+        n_to_sample =
+            static_cast<unsigned>(individual_locations.size());
+    }
+
+    // Separate files for individual metadata and hormone trajectories.
+    std::ofstream metadata_file{
+        param.file_name + "_assay_metadata"
+    };
+
+    std::ofstream trajectory_file{
+        param.file_name + "_assay_trajectories"
+    };
+
+    if (!metadata_file)
+    {
+        std::cerr
+            << "Could not open assay metadata file: "
+            << param.file_name + "_assay_metadata"
+            << "\n";
+
+        return;
+    }
+
+    if (!trajectory_file)
+    {
+        std::cerr
+            << "Could not open assay trajectory file: "
+            << param.file_name + "_assay_trajectories"
+            << "\n";
+
+        return;
+    }
+
+    metadata_file
+        << "sample_id;"
+        << "patch_index;"
+        << "breeder_index;"
+        << "baseline_influx0;"
+        << "baseline_influx1;"
+        << "stress_influx0;"
+        << "stress_influx1;"
+        << "removal0;"
+        << "removal1;"
+        << "baseline_total;"
+        << "stress_influx_total;"
+        << "removal_total;"
+        << "equilibrium_hormone"
+        << '\n';
+
+    trajectory_file
+        << "sample_id;"
+        << "patch_index;"
+        << "breeder_index;"
+        << "relative_time;"
+        << "attacked;"
+        << "stress_hormone"
+        << '\n';
+
+    for (unsigned sample_idx = 0;
+         sample_idx < n_to_sample;
+         ++sample_idx)
+    {
+        unsigned patch_idx =
+            individual_locations[sample_idx].first;
+
+        unsigned breeder_idx =
+            individual_locations[sample_idx].second;
+
+        const Individual &sampled_individual =
+            metapopulation[patch_idx].breeders[breeder_idx];
+
+        double baseline_total =
+            sampled_individual.baseline_influx[0] +
+            sampled_individual.baseline_influx[1];
+
+        double stress_influx_total =
+            sampled_individual.stress_influx[0] +
+            sampled_individual.stress_influx[1];
+
+        double removal_total =
+            sampled_individual.removal[0] +
+            sampled_individual.removal[1];
+
+        double hormone;
+
+        if (removal_total > 0.0)
+        {
+            hormone = baseline_total / removal_total;
+        }
+        else
+        {
+            hormone = param.hmax;
+        }
+
+        // Match the hormone clipping used in the main model.
+        if (hormone < 0.0)
+        {
+            hormone = 0.0;
+        }
+
+        if (hormone > param.hmax)
+        {
+            hormone = param.hmax;
+        }
+
+        unsigned sample_id = sample_idx + 1;
+
+        metadata_file
+            << sample_id << ";"
+            << patch_idx << ";"
+            << breeder_idx << ";"
+            << sampled_individual.baseline_influx[0] << ";"
+            << sampled_individual.baseline_influx[1] << ";"
+            << sampled_individual.stress_influx[0] << ";"
+            << sampled_individual.stress_influx[1] << ";"
+            << sampled_individual.removal[0] << ";"
+            << sampled_individual.removal[1] << ";"
+            << baseline_total << ";"
+            << stress_influx_total << ";"
+            << removal_total << ";"
+            << hormone
+            << '\n';
+
+        int first_time =
+            -static_cast<int>(param.assay_pre_time);
+
+        int final_time =
+            static_cast<int>(param.assay_post_time);
+
+        // Record the equilibrium baseline throughout the pre-attack period.
+        for (int relative_time = first_time;
+             relative_time <= final_time;
+             ++relative_time)
+        {
+            bool attacked = relative_time == 0;
+
+            // At t = 0, apply one standardised attack before recording
+            // the resulting hormone level.
+            if (attacked)
+            {
+                hormone =
+                    (1.0 - removal_total) * hormone +
+                    baseline_total +
+                    stress_influx_total;
+            }
+            else if (relative_time > 0)
+            {
+                hormone =
+                    (1.0 - removal_total) * hormone +
+                    baseline_total;
+            }
+
+            if (hormone < 0.0)
+            {
+                hormone = 0.0;
+            }
+
+            if (hormone > param.hmax)
+            {
+                hormone = param.hmax;
+            }
+
+            trajectory_file
+                << sample_id << ";"
+                << patch_idx << ";"
+                << breeder_idx << ";"
+                << relative_time << ";"
+                << attacked << ";"
+                << hormone
+                << '\n';
+        }
+    }
 }
  
 void StressSocial::write_data_headers()
@@ -743,6 +968,10 @@ void StressSocial::write_parameters()
         << "dmax;" << param.dmax << ";" << std::endl
         << "survival_power;" << param.survival_power << ";" << std::endl
         << "vigilance;" << param.vigilance << ";" << std::endl // vigilance/on off written to file (0 off, 1 on)
+        << "run_end_assay;" << param.run_end_assay << ";" << std::endl
+        << "assay_n_individuals;" << param.assay_n_individuals << ";" << std::endl
+        << "assay_pre_time;" << param.assay_pre_time << ";" << std::endl
+        << "assay_post_time;" << param.assay_post_time << ";" << std::endl
         << "init_v;" << param.init_v << ";" << std::endl
         << "init_stress_hormone_level;" << param.init_stress_hormone_level << ";" << std::endl
         << "init_removal;" << param.init_removal << ";" << std::endl

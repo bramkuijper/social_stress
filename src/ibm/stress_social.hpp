@@ -81,6 +81,7 @@ class StressSocial
         void write_data();
 
         void write_distribution();
+        void run_end_hormone_assay();
 
     public:
         StressSocial(Parameters const &param);

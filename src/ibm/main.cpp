@@ -7,14 +7,16 @@
 int main(int argc, char **argv)
 {
 
-    if (argc != 18)
+    if (argc != 22)
     {
         std::cerr
             << "Usage: " << argv[0]
             << " file_name npatches n max_time s_np s_p md mv"
             << " p_mig p_attack fecundity_power hmax init_v"
-            << " init_stress_hormone g k vigilance\n"
-            << "vigilance must be 1 (on) or 0 (off)\n";
+            << " init_stress_hormone g k vigilance"
+            << " run_end_assay assay_n assay_pre assay_post\n"
+            << "vigilance: 1 = on, 0 = off\n"
+            << "run_end_assay: 1 = on, 0 = off\n";
     
         return 1;
     }
@@ -37,6 +39,11 @@ int main(int argc, char **argv)
     pars.g = std::stod(argv[15]); // damage removal per timestep
     pars.k = std::stod(argv[16]); // increase in damage due to hormone != optimum
     pars.vigilance = std::stoi(argv[17]) != 0; // vigilance on/off: 1 = on, 0 = off
+    pars.run_end_assay = std::stoi(argv[18]) != 0;
+    pars.assay_n_individuals = std::stoul(argv[19]);
+    pars.assay_pre_time = std::stoul(argv[20]);
+    pars.assay_post_time = std::stoul(argv[21]);
+    
     
     StressSocial sim_object(pars);
     return 0;
