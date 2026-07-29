@@ -5,6 +5,7 @@
 #include <cmath>
 #include <numeric>
 #include <fstream>
+#include <filesystem>
 #include <vector>
 #include <algorithm>
 #include <utility>
@@ -85,7 +86,13 @@ StressSocial::StressSocial(Parameters const &parvals) :
                 write_data();
                 // write_distribution(); // debug only
             }
-    } // end for time_step
+    } // end evolutionary simulation
+    
+    // Write every individual in the final evolved population
+    // Done before optional assay so that the file represents the population 
+    // immediately after evolution
+    
+    write_final_individuals();
     
     // Optional controlled hormone assay using evolved individuals
     if (param.run_end_assay)
@@ -97,6 +104,130 @@ StressSocial::StressSocial(Parameters const &parvals) :
     write_parameters();
     
 } // end StressSocial constructor
+
+// Write the complete diploid genotype of every individual in the population after the evolutionary simulation has finished
+// Function called once so only contains the final evolved generation
+void StressSocial::write_final_individuals()
+{
+    namespace fs = std::filesystem;
+
+    // Split the main output path into its directory and filename.
+    fs::path main_output_path{param.file_name};
+
+    fs::path parent_directory =
+        main_output_path.parent_path();
+
+    // If param.file_name contains no directory component,
+    // create the individuals folder in the current directory.
+    if (parent_directory.empty())
+    {
+        parent_directory = ".";
+    }
+
+    // Create a subfolder called "individuals" alongside
+    // the normal simulation output files.
+    fs::path individuals_directory =
+        parent_directory / "individuals";
+
+    std::error_code directory_error;
+
+    fs::create_directories(
+        individuals_directory,
+        directory_error
+    );
+
+    if (directory_error)
+    {
+        std::cerr
+            << "Could not create individuals output directory: "
+            << individuals_directory
+            << "\nReason: "
+            << directory_error.message()
+            << "\n";
+
+        return;
+    }
+
+    // Use the normal simulation filename, with "_individuals"
+    // added to the end.
+    fs::path individuals_path =
+        individuals_directory /
+        (main_output_path.filename().string() + "_individuals");
+
+    individuals_file.open(individuals_path);
+
+    if (!individuals_file)
+    {
+        std::cerr
+            << "Could not open final-individual output file: "
+            << individuals_path
+            << "\n";
+
+        return;
+    }
+
+    // Each row represents one individual in the final population.
+    // The two alleles at each diploid locus are written separately.
+    individuals_file
+        << "final_time_step;"
+        << "patch_index;"
+        << "breeder_index;"
+        << "v0;"
+        << "v1;"
+        << "baseline_influx0;"
+        << "baseline_influx1;"
+        << "stress_influx0;"
+        << "stress_influx1;"
+        << "vigilance_influx0;"
+        << "vigilance_influx1;"
+        << "removal0;"
+        << "removal1;"
+        << "stress_hormone;"
+        << "damage"
+        << '\n';
+
+    // Loop once over every individual in the final population.
+    for (unsigned patch_idx = 0;
+         patch_idx < metapopulation.size();
+         ++patch_idx)
+    {
+        const Patch &patch =
+            metapopulation[patch_idx];
+
+        for (unsigned breeder_idx = 0;
+             breeder_idx < patch.breeders.size();
+             ++breeder_idx)
+        {
+            const Individual &individual =
+                patch.breeders[breeder_idx];
+
+            individuals_file
+                << (param.max_time > 0
+                        ? param.max_time - 1
+                        : 0)
+                << ";"
+                << patch_idx << ";"
+                << breeder_idx << ";"
+                << individual.v[0] << ";"
+                << individual.v[1] << ";"
+                << individual.baseline_influx[0] << ";"
+                << individual.baseline_influx[1] << ";"
+                << individual.stress_influx[0] << ";"
+                << individual.stress_influx[1] << ";"
+                << individual.vigilance_influx[0] << ";"
+                << individual.vigilance_influx[1] << ";"
+                << individual.removal[0] << ";"
+                << individual.removal[1] << ";"
+                << individual.stress_hormone << ";"
+                << individual.damage
+                << '\n';
+        }
+    }
+
+    // The final population is written only once, so close
+    // the file immediately after completing the output.
+    individuals_file.close();
+}
 
 // go over all the patches and initialize them as type NP or P
 void StressSocial::initialize_patches()

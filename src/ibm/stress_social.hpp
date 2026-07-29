@@ -42,8 +42,13 @@ class StressSocial
         // a metapopulation of patches containing individuals
         std::vector <Patch> metapopulation;
         
-        // data file for output 
+        // Output data files
+        
+        // Main time-series output file
         std::ofstream data_file;
+        
+        // Separate output stream for every individual in the final evolved population
+        std::ofstream individuals_file;
         
         // Store total fecundity across all patches for the last timestep for printing
         double last_total_global_fecundity;
@@ -75,10 +80,12 @@ class StressSocial
         double mu(double const damage, 
                 double const vigilance);
 
-        // NOTE: Not sure if this needs including twice?
         void write_parameters();
         void write_data_headers();
         void write_data();
+        
+        // Write loci of every individual after final generation
+        void write_final_individuals();
 
         void write_distribution();
         void run_end_hormone_assay();
