@@ -1198,9 +1198,23 @@ void StressSocial::update_stress_hormone()
                 stress_hormone_tplus1 = param.hmax;
             }
 
-            // d(t+1) = (1-g)d + k(h - theta_h)^2
-            damage_tplus1 = (1.0 - param.g) * damage + 
-                param.k * (stress_hormone_tplus1 - param.theta_hormone) * (stress_hormone_tplus1 - param.theta_hormone);
+            // TABORSKY VALIDATION:
+            // Damage accumulates directly as a consequence of elevated hormone,
+            // following the damage dynamics used in the Taborsky stress model:
+            //
+            // d(t+1) = (1 - g) * d(t) + k * h(t+1)
+            //
+            // Here:
+            //   g = damage clearance per timestep
+            //   k = amount of damage generated per unit hormone
+            //
+            // For direct comparison with the Taborsky Box 3 simulations,
+            // use g = 1.0 and k = 1.0. With these values, previous damage
+            // is completely cleared each timestep and current damage equals
+            // the current hormone level.
+            damage_tplus1 =
+                (1.0 - param.g) * damage +
+                param.k * stress_hormone_tplus1;
                 
             // clip damage to biologically valid range
             if (damage_tplus1 < 0.0)

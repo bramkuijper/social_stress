@@ -82,6 +82,8 @@ class Parameters
         // damage-related things
         double g{0.1}; // removal of damage per timestep
         double k{0.1}; // increase in damage due to hormone != optimum
+        // Hormone optimum used by the original social_stress damage functoin
+        // Not used in the Taborsky-validation damage equation but retaining in case it links with McN vigilance links
         double theta_hormone{1}; // optimal hormone level
         
         // whether vigilance is enabled in this simulation - existing behaviour is default
