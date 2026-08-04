@@ -95,13 +95,24 @@ Individual::Individual(
 
 
     // updating the state variables
-    // this is equilibrium of:
-    // s(t+1) == s(t) * (1-r) + baseline_influx, when solving for
-    // s(t+1) == s(t) == s
-    stress_hormone = (baseline_influx[0] + baseline_influx[1])/(removal[0] + removal[1]);
-
-    // if there is no removal 
-    if (removal[0] + removal[1] == 0)
+    
+    // Express diploid baseline influx and removal as the mean of
+    // the two allelic values, following the Taborsky stress model.
+    double baseline_influx_phenotype =
+        0.5 * (baseline_influx[0] + baseline_influx[1]);
+    
+    double removal_phenotype =
+        0.5 * (removal[0] + removal[1]);
+    
+    // Initialise hormone at the equilibrium of:
+    // h(t+1) = (1-r)h(t) + baseline_influx,
+    // giving h = baseline_influx / r.
+    if (removal_phenotype > 0.0)
+    {
+        stress_hormone =
+            baseline_influx_phenotype / removal_phenotype;
+    }
+    else
     {
         stress_hormone = param.hmax;
     }

@@ -1133,15 +1133,22 @@ void StressSocial::update_stress_hormone()
                 breeder_iter != metapop_iter->breeders.end();
                 ++breeder_iter)
         {
-            r = breeder_iter->removal[0] + breeder_iter->removal[1];
-            baseline_influx = breeder_iter->baseline_influx[0] 
-                + breeder_iter->baseline_influx[1];
-
-            stress_influx = breeder_iter->stress_influx[0] 
-                + breeder_iter->stress_influx[1];
-
-            vigilance_influx = breeder_iter->vigilance_influx[0] 
-                + breeder_iter->vigilance_influx[1];
+            // Express diploid traits as the mean of the two allelic values.
+            // This follows the convention used in the Taborsky stress model
+            // and keeps the phenotype used in the dynamics consistent with
+            // the phenotype reported in the model output.
+            
+            r = 0.5 * (breeder_iter->removal[0] +
+                       breeder_iter->removal[1]);
+            
+            baseline_influx = 0.5 * (breeder_iter->baseline_influx[0] +
+                                     breeder_iter->baseline_influx[1]);
+            
+            stress_influx = 0.5 * (breeder_iter->stress_influx[0] +
+                                   breeder_iter->stress_influx[1]);
+            
+            vigilance_influx = 0.5 * (breeder_iter->vigilance_influx[0] +
+                                      breeder_iter->vigilance_influx[1]);
 
             damage = breeder_iter->damage;
 
