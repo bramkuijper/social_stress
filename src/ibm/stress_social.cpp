@@ -805,7 +805,9 @@ void StressSocial::predator_visit()
 
 
 
-// probability of surviving an attack given hormone level h
+// Probability of surviving an attack given hormone level h,
+// With hmax = 1 and survival_power = 1 this is equivalent to
+// the Taborsky stress model
 double StressSocial::attack_survival(double const h)
 {
     return(pow(h/param.hmax, param.survival_power));

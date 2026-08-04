@@ -33,7 +33,7 @@ int main(int argc, char **argv)
     pars.p_mig = std::stod(argv[9]); // migration probability
     pars.p_attack = std::stod(argv[10]); // probability of being attacked when predator present
     pars.fecundity_power = std::stod(argv[11]); // power of fecundity cost of vigilance
-    pars.hmax = std::stod(argv[12]); // maximum stress hormone level
+    pars.hmax = std::stod(argv[12]); // maximum stress hormone level; use 1.0 for Taborsky validation
     pars.init_v = std::stod(argv[13]); // initial vigilance
     pars.init_stress_hormone_level = std::stod(argv[14]); // initial stress hormone level
     pars.g = std::stod(argv[15]); // damage clearance per time step; Taborsky validation uses 1.0

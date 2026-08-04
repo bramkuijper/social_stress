@@ -54,9 +54,13 @@ class Parameters
         double hmin{0.0};
         double hmax{10.0};
 
-        // max damage level
-        double dmax{10.0};
-
+        // Maximum damage level.
+        // Set to 1.0 for Taborsky validation so that damage uses the same
+        // [0,1] scale as hormone
+        double dmax{1.0};
+        
+        // Power controlling the protective effect of hormone during an attack.
+        // Set to 1.0 for Taborsky validation
         double survival_power{1.0};
 
         double init_v{0.0};

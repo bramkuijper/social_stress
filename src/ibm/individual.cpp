@@ -36,27 +36,31 @@ Individual::Individual(
                 std::mt19937 &rng_r) 
 {
     std::bernoulli_distribution segregator{0.5};
+    
+    // TABORSKY VALIDATION
+    // Each allelic value is bound to the full hormone scale. Because expressed
+    // phenotype is the mean of the two alleles, this allows the phenotype to span the full range [0, hmax]
 
     baseline_influx[0] = mutate(mum.baseline_influx[segregator(rng_r)], param.mu_baseline, param.sdmu, rng_r);
-    baseline_influx[0] = std::clamp(baseline_influx[0], 0.0, param.hmax/2.0);
+    baseline_influx[0] = std::clamp(baseline_influx[0], 0.0, param.hmax);
 
     baseline_influx[1] = mutate(dad.baseline_influx[segregator(rng_r)], param.mu_baseline, param.sdmu, rng_r);
-    baseline_influx[1] = std::clamp(baseline_influx[1], 0.0, param.hmax/2.0);
+    baseline_influx[1] = std::clamp(baseline_influx[1], 0.0, param.hmax);
 
     stress_influx[0] = mutate(mum.stress_influx[segregator(rng_r)], param.mu_stress_influx, param.sdmu, rng_r);
-    stress_influx[0] = std::clamp(stress_influx[0], 0.0, param.hmax/2.0);
+    stress_influx[0] = std::clamp(stress_influx[0], 0.0, param.hmax);
 
     stress_influx[1] = mutate(dad.stress_influx[segregator(rng_r)], param.mu_stress_influx, param.sdmu, rng_r);
-    stress_influx[1] = std::clamp(stress_influx[1], 0.0, param.hmax/2.0);
+    stress_influx[1] = std::clamp(stress_influx[1], 0.0, param.hmax);
     
     
     if (param.vigilance)
     {
         vigilance_influx[0] = mutate(mum.vigilance_influx[segregator(rng_r)], param.mu_vigilance_influx, param.sdmu, rng_r);
-        vigilance_influx[0] = std::clamp(vigilance_influx[0], 0.0, param.hmax/2.0);
+        vigilance_influx[0] = std::clamp(vigilance_influx[0], 0.0, param.hmax);
       
         vigilance_influx[1] = mutate(dad.vigilance_influx[segregator(rng_r)], param.mu_vigilance_influx, param.sdmu, rng_r);
-        vigilance_influx[1] = std::clamp(vigilance_influx[1], 0.0, param.hmax/2.0);
+        vigilance_influx[1] = std::clamp(vigilance_influx[1], 0.0, param.hmax);
     
     }
       else
