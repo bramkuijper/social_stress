@@ -65,7 +65,20 @@ class Parameters
 
         double init_v{0.0};
         double init_stress_hormone_level{0.0};
-        double init_removal{0.1}; // EG add default starting removal value
+        double init_removal{0.1};
+        
+        // TABORSKY VALIDATION:
+        // Maximum stress-induced hormone influx per timestep during
+        // an active post-stressor response.
+        double stress_influx_max{0.25};
+        
+        // Number of timesteps for which stress-induced hormone production
+        // can continue after an attack. Taborsky Box 3 used 75.
+        unsigned tmax_stress_influx{75};
+        
+        // Initial value of h1_S, which controls negative feedback on
+        // stress-induced hormone production.
+        double init_h1_S{0.0};
 
         // base name for the file
         std::string file_name{"sim_stress_social"};
@@ -73,6 +86,9 @@ class Parameters
         // mutation rates
         double mu_baseline{0.01};
         double mu_stress_influx{0.01};
+        // TABORSKY VALIDATION:
+        // Mutation rate for the h1_S feedback trait.
+        double mu_h1_S{0.005};
         double mu_vigilance_influx{0.0}; // Mutation rate for vigilance-driven stress influx - set to 0.0 in no-vigilance benchmark runs
         double mu_removal{0.01};
         double mu_v{0.0}; // Mutation rate for baseline vigilance - set to 0.0 in no-vigilance benchmark runs so vigilance can't evolve

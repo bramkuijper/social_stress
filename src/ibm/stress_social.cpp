@@ -178,6 +178,8 @@ void StressSocial::write_final_individuals()
         << "baseline_influx1;"
         << "stress_influx0;"
         << "stress_influx1;"
+        << "h1_S0;"
+        << "h1_S1;"
         << "vigilance_influx0;"
         << "vigilance_influx1;"
         << "removal0;"
@@ -214,6 +216,8 @@ void StressSocial::write_final_individuals()
                 << individual.baseline_influx[1] << ";"
                 << individual.stress_influx[0] << ";"
                 << individual.stress_influx[1] << ";"
+                << individual.h1_S[0] << ";"
+                << individual.h1_S[1] << ";"
                 << individual.vigilance_influx[0] << ";"
                 << individual.vigilance_influx[1] << ";"
                 << individual.removal[0] << ";"
@@ -296,6 +300,7 @@ void StressSocial::write_distribution()
                << "v0;v1;"
                << "baseline_influx0;baseline_influx1;"
                << "stress_influx0;stress_influx1;"
+               << "h1_S0;h1_S1;"
                << "vigilance_influx0;vigilance_influx1;"
                << "removal0;removal1;"
                << "damage;"
@@ -416,13 +421,13 @@ void StressSocial::run_end_hormone_assay()
         << "breeder_index;"
         << "baseline_influx0;"
         << "baseline_influx1;"
-        << "stress_influx0;"
-        << "stress_influx1;"
+        << "h1_S0;"
+        << "h1_S1;"
         << "removal0;"
         << "removal1;"
-        << "baseline_total;"
-        << "stress_influx_total;"
-        << "removal_total;"
+        << "baseline_phenotype;"
+        << "h1_S_phenotype;"
+        << "removal_phenotype;"
         << "equilibrium_hormone"
         << '\n';
 
@@ -448,24 +453,28 @@ void StressSocial::run_end_hormone_assay()
         const Individual &sampled_individual =
             metapopulation[patch_idx].breeders[breeder_idx];
 
-        double baseline_total =
-            sampled_individual.baseline_influx[0] +
-            sampled_individual.baseline_influx[1];
-
-        double stress_influx_total =
-            sampled_individual.stress_influx[0] +
-            sampled_individual.stress_influx[1];
-
-        double removal_total =
-            sampled_individual.removal[0] +
-            sampled_individual.removal[1];
+        // TABORSKY VALIDATION:
+        // Express diploid traits as the mean of the two alleles,
+        // matching the phenotype convention used in the main model.
+        double baseline_phenotype =
+            0.5 * (sampled_individual.baseline_influx[0] +
+                   sampled_individual.baseline_influx[1]);
+        
+        double h1_S_phenotype =
+            0.5 * (sampled_individual.h1_S[0] +
+                   sampled_individual.h1_S[1]);
+        
+        double removal_phenotype =
+            0.5 * (sampled_individual.removal[0] +
+                   sampled_individual.removal[1]);
 
         double hormone;
 
-        if (removal_total > 0.0)
+        if (removal_phenotype > 0.0)
         {
-            hormone = baseline_total / removal_total;
+            hormone = baseline_phenotype / removal_phenotype;
         }
+        
         else
         {
             hormone = param.hmax;
@@ -490,13 +499,13 @@ void StressSocial::run_end_hormone_assay()
             << breeder_idx << ";"
             << sampled_individual.baseline_influx[0] << ";"
             << sampled_individual.baseline_influx[1] << ";"
-            << sampled_individual.stress_influx[0] << ";"
-            << sampled_individual.stress_influx[1] << ";"
+            << sampled_individual.h1_S[0] << ";"
+            << sampled_individual.h1_S[1] << ";"
             << sampled_individual.removal[0] << ";"
             << sampled_individual.removal[1] << ";"
-            << baseline_total << ";"
-            << stress_influx_total << ";"
-            << removal_total << ";"
+            << baseline_phenotype << ";"
+            << h1_S_phenotype << ";"
+            << removal_phenotype << ";"
             << hormone
             << '\n';
 
@@ -506,6 +515,13 @@ void StressSocial::run_end_hormone_assay()
         int final_time =
             static_cast<int>(param.assay_post_time);
 
+        // State variables for the standardised stress response.
+        // The assay begins outside an active response, with no previous
+        // stress-induced peak.
+        double hx = 0.0;
+        unsigned time_since_last_stressor =
+            param.tmax_stress_influx;
+
         // Record the equilibrium baseline throughout the pre-attack period.
         for (int relative_time = first_time;
              relative_time <= final_time;
@@ -513,21 +529,36 @@ void StressSocial::run_end_hormone_assay()
         {
             bool attacked = relative_time == 0;
 
-            // At t = 0, apply one standardised attack before recording
-            // the resulting hormone level.
-            if (attacked)
+            // During the pre-attack period, hormone remains at its
+            // equilibrium baseline. At t = 0 a standardised attack
+            // starts the Taborsky-style prolonged response.
+            if (relative_time >= 0)
             {
+                if (attacked)
+                {
+                    time_since_last_stressor = 0;
+                }
+                else
+                {
+                    ++time_since_last_stressor;
+                }
+            
+                // Baseline hormone dynamics.
                 hormone =
-                    (1.0 - removal_total) * hormone +
-                    baseline_total +
-                    stress_influx_total;
-            }
-            else if (relative_time > 0)
-            {
-                hormone =
-                    (1.0 - removal_total) * hormone +
-                    baseline_total;
-            }
+                    (1.0 - removal_phenotype) * hormone +
+                    baseline_phenotype;
+            
+                // TABORSKY VALIDATION:
+                // Stress-induced influx can continue for tmax_stress_influx
+                // timesteps following the attack and is regulated by h1_S.
+                if (time_since_last_stressor <
+                    param.tmax_stress_influx)
+                {
+                    hormone +=
+                        param.stress_influx_max *
+                        stress_feedback(hx, h1_S_phenotype);
+                }
+                }
 
             if (hormone < 0.0)
             {
@@ -537,6 +568,13 @@ void StressSocial::run_end_hormone_assay()
             if (hormone > param.hmax)
             {
                 hormone = param.hmax;
+            }
+            
+            // Track the highest hormone level reached during the
+            // standardised response for negative feedback.
+            if (relative_time >= 0 && hx < hormone)
+            {
+                hx = hormone;
             }
 
             trajectory_file
@@ -557,6 +595,7 @@ void StressSocial::write_data_headers()
 	data_file << "time;meanv;varv;"
             << "mean_baseline_influx;var_baseline_influx;"
             << "mean_stress_influx;var_stress_influx;"
+            << "mean_h1_S;var_h1_S;"
             << "mean_vigilance_influx;var_vigilance_influx;"
             << "mean_removal;var_removal;"
             << "mean_damage;var_damage;"
@@ -593,6 +632,11 @@ void StressSocial::write_data()
     double mean_stress_influx {0.0}; // mean stress influx
     double ss_stress_influx {0.0}; // sum of squares stress influx
     double var_stress_influx {0.0}; // variance in stress influx
+    // TABORSKY VALIDATION:
+    // Summary statistics for the evolved h1_S feedback trait.
+    double mean_h1_S {0.0};
+    double ss_h1_S {0.0};
+    double var_h1_S {0.0};
     double mean_vigilance_influx {0.0}; // mean vigilance influx
     double ss_vigilance_influx {0.0}; // sum of squares vigilance influx
     double var_vigilance_influx {0.0}; // variance in vigilance influx
@@ -617,6 +661,7 @@ void StressSocial::write_data()
             double baseline_influx = 0.5 * (breeder.baseline_influx[0] + breeder.baseline_influx[1]);
             double stress_influx = 0.5 * (breeder.stress_influx[0] + breeder.stress_influx[1]);
             double vigilance_influx = 0.5 * (breeder.vigilance_influx[0] + breeder.vigilance_influx[1]);
+            double h1_S = 0.5 * (breeder.h1_S[0] + breeder.h1_S[1]);
             double removal = 0.5 * (breeder.removal[0] + breeder.removal[1]);
             double damage = breeder.damage;
             double stress_hormone = breeder.stress_hormone;
@@ -629,6 +674,9 @@ void StressSocial::write_data()
 
             mean_stress_influx += stress_influx;
             ss_stress_influx += stress_influx * stress_influx;
+
+            mean_h1_S += h1_S;
+            ss_h1_S += h1_S * h1_S;
 
             mean_vigilance_influx += vigilance_influx;
             ss_vigilance_influx += vigilance_influx * vigilance_influx; // Is initialised correctly in individual.cpp?
@@ -666,6 +714,7 @@ void StressSocial::write_data()
         meanv /= total_individuals;
         mean_baseline_influx /= total_individuals;
         mean_stress_influx /= total_individuals;
+        mean_h1_S /= total_individuals;
         mean_vigilance_influx /= total_individuals;
         mean_removal /= total_individuals;
         mean_damage /= total_individuals;
@@ -676,6 +725,7 @@ void StressSocial::write_data()
     varv = (total_individuals > 0) ? (ssv / total_individuals - meanv * meanv) : 0.0;
     var_baseline_influx = (total_individuals > 0) ? (ss_baseline_influx / total_individuals - mean_baseline_influx * mean_baseline_influx): 0.0;
     var_stress_influx = (total_individuals > 0) ? (ss_stress_influx / total_individuals - mean_stress_influx * mean_stress_influx) : 0.0;
+    var_h1_S = (total_individuals > 0) ? (ss_h1_S / total_individuals - mean_h1_S * mean_h1_S) : 0.0;
     var_vigilance_influx = (total_individuals > 0) ? (ss_vigilance_influx / total_individuals - mean_vigilance_influx * mean_vigilance_influx) : 0.0;
     var_removal = (total_individuals > 0) ? (ss_removal / total_individuals - mean_removal * mean_removal) : 0.0;
     var_damage = (total_individuals > 0) ? (ss_damage / total_individuals - mean_damage * mean_damage) : 0.0;
@@ -709,6 +759,8 @@ void StressSocial::write_data()
         << var_baseline_influx << ";" 
         << mean_stress_influx << ";"
         << var_stress_influx << ";" 
+        << mean_h1_S << ";"
+        << var_h1_S << ";"
         << mean_vigilance_influx << ";"
         << var_vigilance_influx << ";" 
         << mean_removal << ";"
@@ -758,6 +810,10 @@ void StressSocial::predator_visit()
                 random_breeder_idx = take_random_breeder(rng_r);
 
                 metapop_iter->breeders[random_breeder_idx].is_attacked = true;
+                
+                // TABORSKY VALIDATION:
+                // An attack starts/restarts the prolonged stress-response window.
+                metapop_iter->breeders[random_breeder_idx].time_since_last_stressor = 0;
 
                 ++n_attacked;
                 
@@ -811,6 +867,22 @@ void StressSocial::predator_visit()
 double StressSocial::attack_survival(double const h)
 {
     return(pow(h/param.hmax, param.survival_power));
+}
+
+// TABORSKY VALIDATION:
+// Hormone-dependent negative feedback on stress-induced influx.
+// If previous peak hormone hx exceeds h1_S, stress-induced production stops.
+// Otherwise production declines linearly as hx approaches h1_S.
+double StressSocial::stress_feedback(
+        double const hx,
+        double const h1_S)
+{
+    if (h1_S <= 0.0 || hx > h1_S)
+    {
+        return 0.0;
+    }
+
+    return 1.0 - hx / h1_S;
 }
 
 // go over all patches and calculate the total probability
@@ -960,6 +1032,7 @@ void StressSocial::reproduce()
                 breeder_iter != metapop_iter->breeders.end();
                 ++breeder_iter)
         {
+        
             // Expressed vigilance phenotype, bounded to [0,1].
             double v_eff =
                 effective_vigilance(*breeder_iter, param.vigilance);
@@ -1141,6 +1214,10 @@ void StressSocial::write_parameters()
         << "mu_vigilance_influx;" << param.mu_vigilance_influx << ";" << std::endl
         << "mu_removal;" << param.mu_removal << ";" << std::endl
         << "mu_v;" << param.mu_v << ";" << std::endl
+        << "stress_influx_max;" << param.stress_influx_max << ";" << std::endl
+        << "tmax_stress_influx;" << param.tmax_stress_influx << ";" << std::endl
+        << "init_h1_S;" << param.init_h1_S << ";" << std::endl
+        << "mu_h1_S;" << param.mu_h1_S << ";" << std::endl
         << "file_name;" << param.file_name << ";" << std::endl 
         << std::endl
         << std::endl;
@@ -1149,7 +1226,7 @@ void StressSocial::write_parameters()
 // update the stress hormone level for each individual
 void StressSocial::update_stress_hormone()
 {
-    double stress_hormone_tplus1, stress_hormone, r, stress_influx, 
+    double stress_hormone_tplus1, stress_hormone, r, 
            vigilance_influx, baseline_influx, damage,damage_tplus1;
 
     // calculate a mean fecundity distribution
@@ -1162,7 +1239,17 @@ void StressSocial::update_stress_hormone()
         for (auto breeder_iter = metapop_iter->breeders.begin();
                 breeder_iter != metapop_iter->breeders.end();
                 ++breeder_iter)
+                
         {
+            // TABORSKY VALIDATION:
+            // Advance the post-stressor timer for individuals not attacked
+            // during the current timestep. Attacked individuals have already
+            // had their timer reset to zero in predator_visit().
+            if (!breeder_iter->is_attacked)
+            {
+                ++breeder_iter->time_since_last_stressor;
+            }
+                                
             // Express diploid traits as the mean of the two allelic values.
             // This follows the convention used in the Taborsky stress model
             // and keeps the phenotype used in the dynamics consistent with
@@ -1174,9 +1261,6 @@ void StressSocial::update_stress_hormone()
             baseline_influx = 0.5 * (breeder_iter->baseline_influx[0] +
                                      breeder_iter->baseline_influx[1]);
             
-            stress_influx = 0.5 * (breeder_iter->stress_influx[0] +
-                                   breeder_iter->stress_influx[1]);
-            
             vigilance_influx = 0.5 * (breeder_iter->vigilance_influx[0] +
                                       breeder_iter->vigilance_influx[1]);
 
@@ -1184,10 +1268,27 @@ void StressSocial::update_stress_hormone()
 
             stress_hormone = breeder_iter->stress_hormone;
 
-            stress_hormone_tplus1 = (1.0 - r) * stress_hormone + 
+            // Baseline hormone dynamics first.
+            stress_hormone_tplus1 =
+                (1.0 - r) * stress_hormone +
                 baseline_influx +
-                breeder_iter->is_attacked * stress_influx + 
-                vigilance_influx * metapop_iter->V; // group vigilance contributes to stress hormone influx
+                vigilance_influx * metapop_iter->V;
+            
+            // TABORSKY VALIDATION:
+            // Following an attack, stress-induced hormone production can continue
+            // for tmax_stress_influx timesteps. Its magnitude is controlled by
+            // hormone-dependent negative feedback through h1_S.
+            if (breeder_iter->time_since_last_stressor <
+                param.tmax_stress_influx)
+            {
+                double h1_S =
+                    0.5 * (breeder_iter->h1_S[0] +
+                           breeder_iter->h1_S[1]);
+            
+                stress_hormone_tplus1 +=
+                    param.stress_influx_max *
+                    stress_feedback(breeder_iter->hx, h1_S);
+            }
                 
             // clip stress hormone to biologically valid range 
             if (stress_hormone_tplus1 < 0.0)
@@ -1198,6 +1299,14 @@ void StressSocial::update_stress_hormone()
             if (stress_hormone_tplus1 > param.hmax)
             {
                 stress_hormone_tplus1 = param.hmax;
+            }
+            
+            // Track the highest hormone level reached during the response.
+            // This is used by h1_S to provide negative feedback on further
+            // stress-induced hormone production.
+            if (breeder_iter->hx < stress_hormone_tplus1)
+            {
+                breeder_iter->hx = stress_hormone_tplus1;
             }
 
             // TABORSKY VALIDATION:

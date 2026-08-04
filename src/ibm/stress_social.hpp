@@ -69,6 +69,12 @@ class StressSocial
 
         double calculate_group_vigilance(Patch const &current_patch);
         double attack_survival(double const h);
+        // TABORSKY VALIDATION:
+        // Hormone-dependent negative feedback on stress-induced hormone influx.
+        double stress_feedback(
+            double const hx,
+            double const h1_S
+        );
         void update_stress_hormone();
 
         // life history functions

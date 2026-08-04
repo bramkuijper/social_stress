@@ -9,11 +9,21 @@ Individual::Individual(Parameters const &params) :
         params.vigilance ? params.init_v / 2.0 : 0.0
     },
     stress_hormone{params.init_stress_hormone_level}
+    
 {
     // EG add - initialising removal alleles
     removal[0] = params.init_removal;
     removal[1] = params.init_removal;
+    // TABORSKY VALIDATION:
+    // Initialise the stress-response feedback trait.
+    h1_S[0] = params.init_h1_S;
+    h1_S[1] = params.init_h1_S;
+
+    // Start outside an active post-stressor response.
+    hx = 0.0;
+    time_since_last_stressor = params.tmax_stress_influx;
 }
+
 
 // copy constructor
 Individual::Individual(Individual const &other) :
@@ -23,6 +33,9 @@ Individual::Individual(Individual const &other) :
     stress_influx{other.stress_influx[0], other.stress_influx[1]},
     vigilance_influx{other.vigilance_influx[0], other.vigilance_influx[1]},
     removal{other.removal[0],other.removal[1]},
+    h1_S{other.h1_S[0], other.h1_S[1]},
+    hx{other.hx},
+    time_since_last_stressor{other.time_since_last_stressor},   
     v{other.v[0],other.v[1]},
     damage{other.damage},
     stress_hormone{other.stress_hormone}
@@ -52,6 +65,25 @@ Individual::Individual(
 
     stress_influx[1] = mutate(dad.stress_influx[segregator(rng_r)], param.mu_stress_influx, param.sdmu, rng_r);
     stress_influx[1] = std::clamp(stress_influx[1], 0.0, param.hmax);
+    
+    // TABORSKY VALIDATION:
+  // Inherit and mutate h1_S, which controls negative feedback
+  // on stress-induced hormone production.
+  h1_S[0] = mutate(
+      mum.h1_S[segregator(rng_r)],
+      param.mu_h1_S,
+      param.sdmu,
+      rng_r
+  );
+  h1_S[0] = std::clamp(h1_S[0], 0.0, 1.0);
+  
+  h1_S[1] = mutate(
+      dad.h1_S[segregator(rng_r)],
+      param.mu_h1_S,
+      param.sdmu,
+      rng_r
+  );
+  h1_S[1] = std::clamp(h1_S[1], 0.0, 1.0);
     
     
     if (param.vigilance)
@@ -129,7 +161,14 @@ Individual::Individual(
         stress_hormone = param.hmax;
     }
 
+    // New offspring start outside an active post-stressor response.
+    // These state variables will be updated when an attack occurs.
+    hx = 0.0;
+    time_since_last_stressor = param.tmax_stress_influx;
+
+
     // damage is 0 as per the default
+    
 
 } // birth constructor
   
@@ -139,6 +178,8 @@ void Individual::operator=(Individual const &other)
     is_attacked = other.is_attacked;
     damage = other.damage;
     stress_hormone = other.stress_hormone;
+    hx = other.hx;
+    time_since_last_stressor = other.time_since_last_stressor;
 
     for (unsigned allele_idx = 0; allele_idx < 2; ++allele_idx)
     {
@@ -147,6 +188,7 @@ void Individual::operator=(Individual const &other)
         vigilance_influx[allele_idx] = other.vigilance_influx[allele_idx];
         removal[allele_idx] = other.removal[allele_idx];
         v[allele_idx] = other.v[allele_idx];
+        h1_S[allele_idx] = other.h1_S[allele_idx];
     }
 } // end operator=()
 
