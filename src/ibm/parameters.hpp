@@ -43,6 +43,12 @@ class Parameters
 
         // power of how fecundity decreases with vigilance
         double fecundity_power{1.0};
+        
+        // power controlling how damage reduces fecundity.
+        // Added for Taborsky-validation runs so that the cost of elevated
+        // stress hormone acts through reproduction rather than mortality,
+        // matching the fitness trade-off in the Taborsky stress model.
+        double damage_fecundity_power{1.5};
 
         // min max hormone
         double hmin{0.0};

@@ -903,13 +903,23 @@ void StressSocial::survive_damage_vigilance()
 } // end survival_damage()
 
 
-// mortality due to baseline mortality, damage and investment in vigilance
 double StressSocial::mu(
         double const damage,
         double const vigilance)
 {
-    // mortality costs associated with 
-    double mortality_prob{param.m0 + param.md * damage / param.dmax + param.mv * vigilance};
+    // TABORSKY VALIDATION:
+    // Damage no longer contributes directly to mortality.
+    // In the Taborsky stress model, elevated hormone/damage reduces
+    // reproductive success rather than increasing mortality.
+    //
+    // Keep the damage argument for now because it is part of the existing
+    // function interface and may be restored when this validation branch
+    // is compared with the full social model.
+    (void)damage;
+
+    double mortality_prob{
+        param.m0 + param.mv * vigilance
+    };
 
     return(mortality_prob);
 }
@@ -948,12 +958,29 @@ void StressSocial::reproduce()
                 breeder_iter != metapop_iter->breeders.end();
                 ++breeder_iter)
         {
-            // calculate 1 - v^x
-
-            double v_eff = effective_vigilance(*breeder_iter, param.vigilance);
+            // Expressed vigilance phenotype, bounded to [0,1].
+            double v_eff =
+                effective_vigilance(*breeder_iter, param.vigilance);
             
-    // fecundity cost uses expressed vigilance phenotype (bounded [0,1])
-            individual_fecundity = 1.0 - std::pow(v_eff, param.fecundity_power);
+            // Existing fecundity cost of vigilance.
+            double vigilance_fecundity =
+                1.0 - std::pow(v_eff, param.fecundity_power);
+            
+            // TABORSKY VALIDATION:
+            // Elevated stress-hormone damage now reduces reproductive success.
+            // This follows the form used in the Taborsky stress model:
+            // fecundity = 1 - (damage / dmax)^ad.
+            double damage_fecundity =
+                1.0 - std::pow(
+                    breeder_iter->damage / param.dmax,
+                    param.damage_fecundity_power
+                );
+            
+            // Combine the independent vigilance and damage costs.
+            // When vigilance is disabled, vigilance_fecundity = 1,
+            // leaving fecundity determined entirely by damage.
+            individual_fecundity =
+                vigilance_fecundity * damage_fecundity;
 
 
             individual_level_fecundities.push_back(individual_fecundity);
@@ -1094,6 +1121,7 @@ void StressSocial::write_parameters()
         << "s_p;" << param.s[P] << ";" << std::endl
         << "p_attack;" << param.p_attack << ";" << std::endl
         << "fecundity_power;" << param.fecundity_power << ";" << std::endl
+        << "damage_fecundity_power;" << param.damage_fecundity_power << ";" << std::endl
         << "hmin;" << param.hmin << ";" << std::endl
         << "hmax;" << param.hmax << ";" << std::endl
         << "dmax;" << param.dmax << ";" << std::endl
