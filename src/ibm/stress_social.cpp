@@ -180,6 +180,8 @@ void StressSocial::write_final_individuals()
         << "stress_influx1;"
         << "h1_S0;"
         << "h1_S1;"
+        << "hstart0;"
+        << "hstart1;"
         << "vigilance_influx0;"
         << "vigilance_influx1;"
         << "removal0;"
@@ -218,6 +220,8 @@ void StressSocial::write_final_individuals()
                 << individual.stress_influx[1] << ";"
                 << individual.h1_S[0] << ";"
                 << individual.h1_S[1] << ";"
+                << individual.hstart[0] << ";"
+                << individual.hstart[1] << ";"
                 << individual.vigilance_influx[0] << ";"
                 << individual.vigilance_influx[1] << ";"
                 << individual.removal[0] << ";"
@@ -301,6 +305,7 @@ void StressSocial::write_distribution()
                << "baseline_influx0;baseline_influx1;"
                << "stress_influx0;stress_influx1;"
                << "h1_S0;h1_S1;"
+               << "hstart0;hstart1;"
                << "vigilance_influx0;vigilance_influx1;"
                << "removal0;removal1;"
                << "damage;"
@@ -330,6 +335,10 @@ void StressSocial::write_distribution()
                        << ind.baseline_influx[1] << ";"
                        << ind.stress_influx[0] << ";"
                        << ind.stress_influx[1] << ";"
+                       << ind.h1_S[0] << ";"
+                       << ind.h1_S[1] << ";"
+                       << ind.hstart[0] << ";"
+                       << ind.hstart[1] << ";"
                        << ind.vigilance_influx[0] << ";"
                        << ind.vigilance_influx[1] << ";"
                        << ind.removal[0] << ";"
@@ -596,6 +605,7 @@ void StressSocial::write_data_headers()
             << "mean_baseline_influx;var_baseline_influx;"
             << "mean_stress_influx;var_stress_influx;"
             << "mean_h1_S;var_h1_S;"
+            << "mean_hstart;var_hstart;"
             << "mean_vigilance_influx;var_vigilance_influx;"
             << "mean_removal;var_removal;"
             << "mean_damage;var_damage;"
@@ -637,6 +647,9 @@ void StressSocial::write_data()
     double mean_h1_S {0.0};
     double ss_h1_S {0.0};
     double var_h1_S {0.0};
+    double mean_hstart{0.0};
+    double ss_hstart{0.0};
+    double var_hstart{0.0};
     double mean_vigilance_influx {0.0}; // mean vigilance influx
     double ss_vigilance_influx {0.0}; // sum of squares vigilance influx
     double var_vigilance_influx {0.0}; // variance in vigilance influx
@@ -662,6 +675,11 @@ void StressSocial::write_data()
             double stress_influx = 0.5 * (breeder.stress_influx[0] + breeder.stress_influx[1]);
             double vigilance_influx = 0.5 * (breeder.vigilance_influx[0] + breeder.vigilance_influx[1]);
             double h1_S = 0.5 * (breeder.h1_S[0] + breeder.h1_S[1]);
+            
+            // TABORSKY VALIDATION:
+            // Expressed starting hormone phenotype.
+            double hstart = 0.5 * (breeder.hstart[0] + breeder.hstart[1]);
+            
             double removal = 0.5 * (breeder.removal[0] + breeder.removal[1]);
             double damage = breeder.damage;
             double stress_hormone = breeder.stress_hormone;
@@ -677,7 +695,10 @@ void StressSocial::write_data()
 
             mean_h1_S += h1_S;
             ss_h1_S += h1_S * h1_S;
-
+            
+            mean_hstart += hstart;
+            ss_hstart += hstart * hstart;
+            
             mean_vigilance_influx += vigilance_influx;
             ss_vigilance_influx += vigilance_influx * vigilance_influx; // Is initialised correctly in individual.cpp?
 
@@ -715,6 +736,7 @@ void StressSocial::write_data()
         mean_baseline_influx /= total_individuals;
         mean_stress_influx /= total_individuals;
         mean_h1_S /= total_individuals;
+        mean_hstart /= total_individuals;
         mean_vigilance_influx /= total_individuals;
         mean_removal /= total_individuals;
         mean_damage /= total_individuals;
@@ -726,6 +748,7 @@ void StressSocial::write_data()
     var_baseline_influx = (total_individuals > 0) ? (ss_baseline_influx / total_individuals - mean_baseline_influx * mean_baseline_influx): 0.0;
     var_stress_influx = (total_individuals > 0) ? (ss_stress_influx / total_individuals - mean_stress_influx * mean_stress_influx) : 0.0;
     var_h1_S = (total_individuals > 0) ? (ss_h1_S / total_individuals - mean_h1_S * mean_h1_S) : 0.0;
+    var_hstart = (total_individuals > 0) ? (ss_hstart / total_individuals - mean_hstart * mean_hstart) : 0.0;
     var_vigilance_influx = (total_individuals > 0) ? (ss_vigilance_influx / total_individuals - mean_vigilance_influx * mean_vigilance_influx) : 0.0;
     var_removal = (total_individuals > 0) ? (ss_removal / total_individuals - mean_removal * mean_removal) : 0.0;
     var_damage = (total_individuals > 0) ? (ss_damage / total_individuals - mean_damage * mean_damage) : 0.0;
@@ -761,6 +784,8 @@ void StressSocial::write_data()
         << var_stress_influx << ";" 
         << mean_h1_S << ";"
         << var_h1_S << ";"
+        << mean_hstart << ";"
+        << var_hstart << ";"
         << mean_vigilance_influx << ";"
         << var_vigilance_influx << ";" 
         << mean_removal << ";"
@@ -1207,13 +1232,18 @@ void StressSocial::write_parameters()
         << "assay_pre_time;" << param.assay_pre_time << ";" << std::endl
         << "assay_post_time;" << param.assay_post_time << ";" << std::endl
         << "init_v;" << param.init_v << ";" << std::endl
-        << "init_stress_hormone_level;" << param.init_stress_hormone_level << ";" << std::endl
+        << "init_stress_hormone_level;" << param.init_stress_hormone_level << ";" << std::endl // A legacy in this model
+        << "init_baseline_influx;" << param.init_baseline_influx << ";" << std::endl
         << "init_removal;" << param.init_removal << ";" << std::endl
+        << "min_removal;" << param.min_removal << ";" << std::endl
+        << "init_hstart;" << param.init_hstart << ";" << std::endl
         << "mu_baseline;" << param.mu_baseline << ";" << std::endl
         << "mu_stress_influx;" << param.mu_stress_influx << ";" << std::endl
         << "mu_vigilance_influx;" << param.mu_vigilance_influx << ";" << std::endl
         << "mu_removal;" << param.mu_removal << ";" << std::endl
         << "mu_v;" << param.mu_v << ";" << std::endl
+        << "mu_hstart;" << param.mu_hstart << ";" << std::endl
+        << "sdmu;" << param.sdmu << ";" << std::endl
         << "stress_influx_max;" << param.stress_influx_max << ";" << std::endl
         << "tmax_stress_influx;" << param.tmax_stress_influx << ";" << std::endl
         << "init_h1_S;" << param.init_h1_S << ";" << std::endl

@@ -7,14 +7,31 @@ Individual::Individual(Parameters const &params) :
     v{
         params.vigilance ? params.init_v / 2.0 : 0.0,
         params.vigilance ? params.init_v / 2.0 : 0.0
-    },
-    stress_hormone{params.init_stress_hormone_level}
-    
+    }
 {
-    // EG add - initialising removal alleles
+    // Initialise stress-independent baseline influx
+    baseline_influx[0] = params.init_baseline_influx;
+    baseline_influx[1] = params.init_baseline_influx;
+    
+    // Initialise evolvable starting hormone trait.
+    hstart[0] = params.init_hstart;
+    hstart[1] = params.init_hstart;
+    
+    // Initialise current hormone from hstart.
+    stress_hormone =
+        0.5 * (hstart[0] + hstart[1]);
+
+    stress_hormone =
+        std::clamp(
+            stress_hormone,
+            0.0,
+            params.hmax
+        );
+    
+    // Initialising removal alleles
     removal[0] = params.init_removal;
     removal[1] = params.init_removal;
-    // TABORSKY VALIDATION:
+    
     // Initialise the stress-response feedback trait.
     h1_S[0] = params.init_h1_S;
     h1_S[1] = params.init_h1_S;
@@ -34,6 +51,7 @@ Individual::Individual(Individual const &other) :
     vigilance_influx{other.vigilance_influx[0], other.vigilance_influx[1]},
     removal{other.removal[0],other.removal[1]},
     h1_S{other.h1_S[0], other.h1_S[1]},
+    hstart{other.hstart[0], other.hstart[1]},
     hx{other.hx},
     time_since_last_stressor{other.time_since_last_stressor},   
     v{other.v[0],other.v[1]},
@@ -67,23 +85,23 @@ Individual::Individual(
     stress_influx[1] = std::clamp(stress_influx[1], 0.0, param.hmax);
     
     // TABORSKY VALIDATION:
-  // Inherit and mutate h1_S, which controls negative feedback
-  // on stress-induced hormone production.
-  h1_S[0] = mutate(
-      mum.h1_S[segregator(rng_r)],
-      param.mu_h1_S,
-      param.sdmu,
-      rng_r
-  );
-  h1_S[0] = std::clamp(h1_S[0], 0.0, 1.0);
-  
-  h1_S[1] = mutate(
-      dad.h1_S[segregator(rng_r)],
-      param.mu_h1_S,
-      param.sdmu,
-      rng_r
-  );
-  h1_S[1] = std::clamp(h1_S[1], 0.0, 1.0);
+    // Inherit and mutate h1_S, which controls negative feedback
+    // on stress-induced hormone production.
+    h1_S[0] = mutate(
+        mum.h1_S[segregator(rng_r)],
+        param.mu_h1_S,
+        param.sdmu,
+        rng_r
+    );
+    h1_S[0] = std::clamp(h1_S[0], 0.0, 1.0);
+    
+    h1_S[1] = mutate(
+        dad.h1_S[segregator(rng_r)],
+        param.mu_h1_S,
+        param.sdmu,
+        rng_r
+    );
+    h1_S[1] = std::clamp(h1_S[1], 0.0, 1.0);
     
     
     if (param.vigilance)
@@ -104,10 +122,29 @@ Individual::Individual(
       }
       
     removal[0] = mutate(mum.removal[segregator(rng_r)], param.mu_removal, param.sdmu, rng_r);
-    removal[0] = std::clamp(removal[0], 0.0, 1.0);
+    removal[0] = std::clamp(removal[0],param.min_removal,1.0);
 
     removal[1] = mutate(dad.removal[segregator(rng_r)], param.mu_removal, param.sdmu, rng_r);
-    removal[1] = std::clamp(removal[1], 0.0, 1.0);
+    removal[1] = std::clamp(removal[1],param.min_removal,1.0);
+    
+    // Inherit and mutate the starting hormone trait.
+    hstart[0] = mutate(
+        mum.hstart[segregator(rng_r)],
+        param.mu_hstart,
+        param.sdmu,
+        rng_r
+    );
+    hstart[0] =
+        std::clamp(hstart[0], 0.0, param.hmax);
+    
+    hstart[1] = mutate(
+        dad.hstart[segregator(rng_r)],
+        param.mu_hstart,
+        param.sdmu,
+        rng_r
+    );
+    hstart[1] =
+        std::clamp(hstart[1], 0.0, param.hmax);
 
     // If vigilance disabled, vigilance alleles fixed at zero
     if (param.vigilance)
@@ -129,37 +166,18 @@ Individual::Individual(
       // Expressed vigilance is calculated via effective_vigilance()
       // = 0.5*(v[0] + v[1]) clamped to [0,1] in stress_social.cpp.
 
-
-    // updating the state variables
-    
-    // Express diploid baseline influx and removal as the mean of
-    // the two allelic values, following the Taborsky stress model.
-    double baseline_influx_phenotype =
-        0.5 * (baseline_influx[0] + baseline_influx[1]);
-    
-    double removal_phenotype =
-        0.5 * (removal[0] + removal[1]);
-    
-    // Initialise hormone at the equilibrium of:
-    // h(t+1) = (1-r)h(t) + baseline_influx,
-    // giving h = baseline_influx / r.
-    if (removal_phenotype > 0.0)
-    {
-        stress_hormone =
-            baseline_influx_phenotype / removal_phenotype;
-    }
-    else
-    {
-        stress_hormone = param.hmax;
-    }
-
-    // if stress hormone exceeds hmax then bring it back to it
-    // for example, this happens when removal is not 0, but
-    // v close to it.
-    if (stress_hormone > param.hmax)
-    {
-        stress_hormone = param.hmax;
-    }
+      // TABORSKY VALIDATION:
+      // New offspring begin at their inherited hstart phenotype,
+      // matching the Taborsky stress model.
+      stress_hormone =
+          0.5 * (hstart[0] + hstart[1]);
+      
+      stress_hormone =
+          std::clamp(
+              stress_hormone,
+              0.0,
+              param.hmax
+          );
 
     // New offspring start outside an active post-stressor response.
     // These state variables will be updated when an attack occurs.
@@ -189,6 +207,7 @@ void Individual::operator=(Individual const &other)
         removal[allele_idx] = other.removal[allele_idx];
         v[allele_idx] = other.v[allele_idx];
         h1_S[allele_idx] = other.h1_S[allele_idx];
+        hstart[allele_idx] = other.hstart[allele_idx];
     }
 } // end operator=()
 

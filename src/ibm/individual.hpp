@@ -15,10 +15,14 @@ class Individual
         double stress_influx[2]{0.0,0.0}; 
         double vigilance_influx[2]{0.0,0.0}; 
         double removal[2]{0.0,0.0};
+        
         // TABORSKY VALIDATION ADDITIONS
         // h1_S controls negative feedback on stress-induced hormone influx.
         // Expressed phenotype is the mean of the two alleles.
         double h1_S[2];
+        
+        /// Starting hormone level. Expressed phenotype is the mean of the two alleles
+        double hstart[2];
         
         // Highest hormone level reached during the current stress response.
         // Used by the Taborsky feedback function.

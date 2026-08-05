@@ -83,16 +83,17 @@ class Parameters
         // base name for the file
         std::string file_name{"sim_stress_social"};
 
-        // mutation rates
-        double mu_baseline{0.01};
-        double mu_stress_influx{0.01};
         // TABORSKY VALIDATION:
-        // Mutation rate for the h1_S feedback trait.
+        // mutation rates aligned with Taborsky stress model
+        double mu_baseline{0.0005};
+        double mu_stress_influx{0.0};
         double mu_h1_S{0.005};
         double mu_vigilance_influx{0.0}; // Mutation rate for vigilance-driven stress influx - set to 0.0 in no-vigilance benchmark runs
-        double mu_removal{0.01};
+        double mu_removal{0.0005};
         double mu_v{0.0}; // Mutation rate for baseline vigilance - set to 0.0 in no-vigilance benchmark runs so vigilance can't evolve
-        double sdmu{0.01};
+        // Standard deviation of mutational effects
+        // Taborsky validation uses 0.10
+        double sdmu{0.10};
 
         // mortality rates 
         double m0{0.001}; // 1/1000 mortality
@@ -105,6 +106,20 @@ class Parameters
         // Hormone optimum used by the original social_stress damage functoin
         // Not used in the Taborsky-validation damage equation but retaining in case it links with McN vigilance links
         double theta_hormone{1}; // optimal hormone level
+        
+        // TABORSKY VALIDATION:
+        // Initial stress-independent hormone influx.
+        double init_baseline_influx{0.05};
+        
+        // Starting hormone level is an evolvable trait in the
+        // Taborsky stress model.
+        double init_hstart{0.5};
+        
+        // Mutation probability for hstart.
+        double mu_hstart{0.0005};
+        
+        // Minimum clearance allowed in the Taborsky model.
+        double min_removal{0.01};
         
         // whether vigilance is enabled in this simulation - existing behaviour is default
         bool vigilance{true};
