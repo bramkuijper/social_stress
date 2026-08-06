@@ -96,7 +96,7 @@ class Parameters
         double sdmu{0.10};
 
         // mortality rates 
-        double m0{0.001}; // 1/1000 mortality
+        double m0{0.002}; // Background mortality match with Taborsky model
         double md{1.0}; // weighting of damage-related mortality
         double mv{1.0}; // weighting of vigilance-investment-related mortality
         

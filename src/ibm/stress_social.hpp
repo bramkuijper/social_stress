@@ -75,7 +75,14 @@ class StressSocial
             double const hx,
             double const h1_S
         );
-        void update_stress_hormone();
+        
+        // TABORSKY VALIDATION:
+        // Split hormone and damage dynamics into separate lifecycle phases
+        // so that baseline hormone updates before predation, the acute response
+        // occurs after an attack, and damage is updated after mortality.
+        void update_baseline_hormone();
+        void update_stress_response();
+        void update_damage();
 
         // life history functions
         void survive_damage_vigilance();

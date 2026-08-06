@@ -66,15 +66,29 @@ StressSocial::StressSocial(Parameters const &parvals) :
             n_death_predator = 0;
             sum_damage_at_damage_death = 0.0;
 
-          // effectively, we want the predator to visit some patches
-          // and to attack individuals there.
-            
-            switch_predator_status();
-
-            predator_visit();
-            survive_damage_vigilance();
-            reproduce();
-            update_stress_hormone();
+          // TABORSKY VALIDATION:
+          // Match the order of events in the Taborsky stress model:
+          //
+          // 1. environment changes
+          // 2. baseline hormone dynamics
+          // 3. predator attack
+          // 4. stress-induced hormone response
+          // 5. background mortality
+          // 6. damage update
+          // 7. fecundity/reproduction
+          switch_predator_status();
+          
+          update_baseline_hormone();
+          
+          predator_visit();
+          
+          update_stress_response();
+          
+          survive_damage_vigilance();
+          
+          update_damage();
+          
+          reproduce();
         
            // error checking: ntotal should always be >= each death count - simplified from previous version
             assert(param.n * param.npatches >= n_death_damage); // total pop >= deaths from damage
@@ -1058,29 +1072,46 @@ void StressSocial::reproduce()
                 ++breeder_iter)
         {
         
-            // Expressed vigilance phenotype, bounded to [0,1].
-            double v_eff =
-                effective_vigilance(*breeder_iter, param.vigilance);
-            
-            // Existing fecundity cost of vigilance.
-            double vigilance_fecundity =
-                1.0 - std::pow(v_eff, param.fecundity_power);
-            
             // TABORSKY VALIDATION:
-            // Elevated stress-hormone damage now reduces reproductive success.
-            // This follows the form used in the Taborsky stress model:
-            // fecundity = 1 - (damage / dmax)^ad.
-            double damage_fecundity =
-                1.0 - std::pow(
-                    breeder_iter->damage / param.dmax,
-                    param.damage_fecundity_power
-                );
+            // Dead individuals must have zero reproductive success.
+            // In the Taborsky stress model, dead individuals remain in the
+            // population until replacement but have fecundity exactly zero.
+            if (!breeder_iter->is_alive)
+            {
+                individual_fecundity = 0.0;
+            }
+            else
+            {
+                // Expressed vigilance phenotype, bounded to [0,1].
+                double v_eff =
+                    effective_vigilance(*breeder_iter, param.vigilance);
             
-            // Combine the independent vigilance and damage costs.
-            // When vigilance is disabled, vigilance_fecundity = 1,
-            // leaving fecundity determined entirely by damage.
-            individual_fecundity =
-                vigilance_fecundity * damage_fecundity;
+                // Existing fecundity cost of vigilance.
+                double vigilance_fecundity =
+                    1.0 - std::pow(
+                        v_eff,
+                        param.fecundity_power
+                    );
+            
+                // Taborsky damage-dependent fecundity:
+                // F = 1 - (damage / dmax)^ad
+                double damage_fecundity =
+                    1.0 - std::pow(
+                        breeder_iter->damage / param.dmax,
+                        param.damage_fecundity_power
+                    );
+            
+                damage_fecundity =
+                    std::clamp(
+                        damage_fecundity,
+                        0.0,
+                        1.0
+                    );
+            
+                individual_fecundity =
+                    vigilance_fecundity *
+                    damage_fecundity;
+            }
 
 
             individual_level_fecundities.push_back(individual_fecundity);
@@ -1118,6 +1149,18 @@ void StressSocial::reproduce()
     unsigned patch_producing_new_offspring_idx, mum_idx, dad_idx;
     double probability_sample_immigrant, migrant_contribution, local_contribution, total_local_fecundity;
 
+    // TABORSKY VALIDATION:
+    // Equilibrium probability that a newly born individual experiences
+    // the predator-present environment.
+    //
+    // Taborsky assigns every newborn a new environmental state drawn
+    // independently from this equilibrium probability. In social_stress,
+    // environment is a patch property rather than an individual property,
+    // so we reproduce this behaviour only when n = 1, where one patch
+    // corresponds to one individual.
+    double equilibrium_predator_probability =
+        param.s[NP] /
+        (param.s[NP] + param.s[P]);
 
     // tasks ahead:
     // 1. go over all breeders
@@ -1176,7 +1219,7 @@ void StressSocial::reproduce()
                 dad_idx = metapopulation[
                     patch_producing_new_offspring_idx].within_patch_fecundity_distribution(rng_r);
 
-                assert(mum_idx < param.n);
+                assert(dad_idx < param.n);
 
                 // call birth constructor
                 Individual Kid(
@@ -1190,6 +1233,21 @@ void StressSocial::reproduce()
 
                 // fill the vacancy with new offspring
                 *breeder_iter = Kid;
+                
+                // TABORSKY VALIDATION:
+                // In Taborsky, each newborn starts in a newly sampled environmental
+                // state rather than inheriting the environmental history of the
+                // individual it replaces.
+                //
+                // social_stress stores predator state at patch level, so this is
+                // equivalent only for the validation setup n = 1. For social-model
+                // runs with n > 1, retain the existing shared patch environment.
+                if (param.n == 1)
+                {
+                    metapopulation[patch_idx].predator_patch =
+                        uniform(rng_r) <
+                        equilibrium_predator_probability;
+                }
                 
                 assert(breeder_iter->v[0] >= 0);
                 assert(breeder_iter->v[0] <= 1.0);
@@ -1253,127 +1311,177 @@ void StressSocial::write_parameters()
         << std::endl;
 }
 
-// update the stress hormone level for each individual
-void StressSocial::update_stress_hormone()
+// TABORSKY VALIDATION:
+// First physiological phase of each timestep.
+//
+// This matches the beginning of Taborsky's survive() function:
+// 1. advance time since the previous stressor;
+// 2. apply normal hormone removal and baseline influx.
+//
+// This occurs BEFORE the predator attack, so attack survival uses
+// the individual's hormone level after the current baseline update.
+void StressSocial::update_baseline_hormone()
 {
-    double stress_hormone_tplus1, stress_hormone, r, 
-           vigilance_influx, baseline_influx, damage,damage_tplus1;
-
-    // calculate a mean fecundity distribution
     for (auto metapop_iter = metapopulation.begin();
-            metapop_iter != metapopulation.end();
-            ++metapop_iter)
+         metapop_iter != metapopulation.end();
+         ++metapop_iter)
     {
-        // calculate fecundity for each group
-        // dependent on individual vigilance values
         for (auto breeder_iter = metapop_iter->breeders.begin();
-                breeder_iter != metapop_iter->breeders.end();
-                ++breeder_iter)
-                
+             breeder_iter != metapop_iter->breeders.end();
+             ++breeder_iter)
         {
-            // TABORSKY VALIDATION:
-            // Advance the post-stressor timer for individuals not attacked
-            // during the current timestep. Attacked individuals have already
-            // had their timer reset to zero in predator_visit().
-            if (!breeder_iter->is_attacked)
+            // All vacancies were replaced at the end of the previous
+            // timestep, so individuals should normally be alive here.
+            if (!breeder_iter->is_alive)
             {
-                ++breeder_iter->time_since_last_stressor;
+                continue;
             }
-                                
-            // Express diploid traits as the mean of the two allelic values.
-            // This follows the convention used in the Taborsky stress model
-            // and keeps the phenotype used in the dynamics consistent with
-            // the phenotype reported in the model output.
-            
-            r = 0.5 * (breeder_iter->removal[0] +
-                       breeder_iter->removal[1]);
-            
-            baseline_influx = 0.5 * (breeder_iter->baseline_influx[0] +
-                                     breeder_iter->baseline_influx[1]);
-            
-            vigilance_influx = 0.5 * (breeder_iter->vigilance_influx[0] +
-                                      breeder_iter->vigilance_influx[1]);
 
-            damage = breeder_iter->damage;
+            // Taborsky increments this counter at the beginning
+            // of each individual's timestep, before any new attack.
+            ++breeder_iter->time_since_last_stressor;
 
-            stress_hormone = breeder_iter->stress_hormone;
+            double removal =
+                0.5 * (
+                    breeder_iter->removal[0] +
+                    breeder_iter->removal[1]
+                );
 
-            // Baseline hormone dynamics first.
-            stress_hormone_tplus1 =
-                (1.0 - r) * stress_hormone +
+            double baseline_influx =
+                0.5 * (
+                    breeder_iter->baseline_influx[0] +
+                    breeder_iter->baseline_influx[1]
+                );
+
+            double vigilance_influx =
+                0.5 * (
+                    breeder_iter->vigilance_influx[0] +
+                    breeder_iter->vigilance_influx[1]
+                );
+
+            // Normal hormone dynamics.
+            breeder_iter->stress_hormone =
+                (1.0 - removal) *
+                breeder_iter->stress_hormone +
                 baseline_influx +
                 vigilance_influx * metapop_iter->V;
-            
-            // TABORSKY VALIDATION:
-            // Following an attack, stress-induced hormone production can continue
-            // for tmax_stress_influx timesteps. Its magnitude is controlled by
-            // hormone-dependent negative feedback through h1_S.
+
+            // Keep hormone within its permitted range.
+            breeder_iter->stress_hormone =
+                std::clamp(
+                    breeder_iter->stress_hormone,
+                    0.0,
+                    param.hmax
+                );
+        }
+    }
+}
+
+// TABORSKY VALIDATION:
+// Second physiological phase of each timestep.
+//
+// predator_visit() has already happened at this point.
+// Any attacked individual therefore has
+// time_since_last_stressor = 0.
+//
+// Stress-induced hormone production then continues while the
+// individual remains inside the post-stressor response window.
+void StressSocial::update_stress_response()
+{
+    for (auto metapop_iter = metapopulation.begin();
+         metapop_iter != metapopulation.end();
+         ++metapop_iter)
+    {
+        for (auto breeder_iter = metapop_iter->breeders.begin();
+             breeder_iter != metapop_iter->breeders.end();
+             ++breeder_iter)
+        {
+            // Individuals killed by the attack no longer contribute
+            // to later survival, damage or reproduction. There is no
+            // need to update their physiological state further.
+            if (!breeder_iter->is_alive)
+            {
+                breeder_iter->is_attacked = false;
+                continue;
+            }
+
             if (breeder_iter->time_since_last_stressor <
                 param.tmax_stress_influx)
             {
                 double h1_S =
-                    0.5 * (breeder_iter->h1_S[0] +
-                           breeder_iter->h1_S[1]);
-            
-                stress_hormone_tplus1 +=
+                    0.5 * (
+                        breeder_iter->h1_S[0] +
+                        breeder_iter->h1_S[1]
+                    );
+
+                breeder_iter->stress_hormone +=
                     param.stress_influx_max *
-                    stress_feedback(breeder_iter->hx, h1_S);
-            }
-                
-            // clip stress hormone to biologically valid range 
-            if (stress_hormone_tplus1 < 0.0)
-            {
-                stress_hormone_tplus1 = 0.0;
-            }
-            
-            if (stress_hormone_tplus1 > param.hmax)
-            {
-                stress_hormone_tplus1 = param.hmax;
-            }
-            
-            // Track the highest hormone level reached during the response.
-            // This is used by h1_S to provide negative feedback on further
-            // stress-induced hormone production.
-            if (breeder_iter->hx < stress_hormone_tplus1)
-            {
-                breeder_iter->hx = stress_hormone_tplus1;
+                    stress_feedback(
+                        breeder_iter->hx,
+                        h1_S
+                    );
+
+                breeder_iter->stress_hormone =
+                    std::clamp(
+                        breeder_iter->stress_hormone,
+                        0.0,
+                        param.hmax
+                    );
+
+                // Match Taborsky: hx is updated only during
+                // the active post-stressor response.
+                if (breeder_iter->hx <
+                    breeder_iter->stress_hormone)
+                {
+                    breeder_iter->hx =
+                        breeder_iter->stress_hormone;
+                }
             }
 
-            // TABORSKY VALIDATION:
-            // Damage accumulates directly as a consequence of elevated hormone,
-            // following the damage dynamics used in the Taborsky stress model:
-            //
-            // d(t+1) = (1 - g) * d(t) + k * h(t+1)
-            //
-            // Here:
-            //   g = damage clearance per timestep
-            //   k = amount of damage generated per unit hormone
-            //
-            // For direct comparison with the Taborsky Box 3 simulations,
-            // use g = 1.0 and k = 1.0. With these values, previous damage
-            // is completely cleared each timestep and current damage equals
-            // the current hormone level.
-            damage_tplus1 =
-                (1.0 - param.g) * damage +
-                param.k * stress_hormone_tplus1;
-                
-            // clip damage to biologically valid range
-            if (damage_tplus1 < 0.0)
-            {
-                damage_tplus1 = 0.0;
-            }
-            
-            if (damage_tplus1 > param.dmax)
-            {
-                damage_tplus1 = param.dmax;
-            }
-
-            // undo the is_attacked variable, ready for the next time step
+            // Reset attack flag ready for the next timestep.
+            // The stress-response timer remains active independently.
             breeder_iter->is_attacked = false;
-
-            breeder_iter->stress_hormone = stress_hormone_tplus1;
-            breeder_iter->damage = damage_tplus1;
         }
     }
-} // update_stress_hormone()
+}
 
+// TABORSKY VALIDATION:
+// Final physiological phase before reproduction.
+//
+// This occurs AFTER predator and background mortality, matching
+// Taborsky's lifecycle. Only surviving individuals accumulate
+// current-timestep hormone-dependent damage.
+//
+// d(t+1) = (1-g)d(t) + k*h(t+1)
+void StressSocial::update_damage()
+{
+    for (auto metapop_iter = metapopulation.begin();
+         metapop_iter != metapopulation.end();
+         ++metapop_iter)
+    {
+        for (auto breeder_iter = metapop_iter->breeders.begin();
+             breeder_iter != metapop_iter->breeders.end();
+             ++breeder_iter)
+        {
+            // Taborsky updates damage only for individuals
+            // that remain alive after mortality.
+            if (!breeder_iter->is_alive)
+            {
+                continue;
+            }
+
+            double damage_tplus1 =
+                (1.0 - param.g) *
+                breeder_iter->damage +
+                param.k *
+                breeder_iter->stress_hormone;
+
+            breeder_iter->damage =
+                std::clamp(
+                    damage_tplus1,
+                    0.0,
+                    param.dmax
+                );
+        }
+    }
+}
