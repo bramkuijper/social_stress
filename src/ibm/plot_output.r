@@ -44,9 +44,21 @@ jsonstuff <- '[
     {
         "xvar" : "time",
         "yvar" : "varv"
+    },{
+        "xvar" : "time",
+        "yvar" : ["mean_baseline_influx","mean_stress_influx","mean_vigilance_influx"]
+    },{
+        "xvar" : "time",
+        "yvar" : ["var_baseline_influx","var_stress_influx","var_vigilance_influx"]
+    },{
+        "xvar" : "time",
+        "yvar" : "mean_removal"
+    },{
+        "xvar" : "time",
+        "yvar" : ["mean_damage","mean_stress_hormone","mean_group_V"]
     }]
 '
-
+file.name <- "sim_stress_social_1_20261113_121311"
 if (!exists("file.name"))
 {
     
@@ -87,7 +99,7 @@ plot.structure <- fromJSON(jsonstuff, simplifyVector = F)
 plot.structure.l <- length(plot.structure)
 
 # list with all the plots
-plot.list <- list(rep(NA,times=plot.structure.l))
+plot.list <- list()
 
 plot.list.idx <- 1
 
@@ -150,7 +162,45 @@ for (plot_struct_idx in 1:plot.structure.l)
     plot.list[[plot.list.idx]] <- plot.list[[plot.list.idx]] + theme_classic()
     
     plot.list.idx <- plot.list.idx + 1
+} # end for
+
+
+# ok now add a file that simulates a stress response
+tmax_iter <- 500
+t_stressor <- 250
+
+data_stress <- data.frame(
+        t = seq(0,tmax_iter),
+        stress_hormone = NA) %>% 
+    mutate(
+            stressor = if_else(t == tmax_iter / 2,1,0)
+            )
+
+# start the stress hormone at its optimum
+data_stress[1,"stress_hormone"] <- as.numeric(params["theta_hormone"])
+
+baseline_influx <- data.tibble %>% tail(n = 1) %>% pull(mean_baseline_influx)
+stress_influx <- data.tibble %>% tail(n = 1) %>% pull(mean_stress_influx)
+removal <- data.tibble %>% tail(n = 1) %>% pull(mean_removal)
+
+
+for (t in 2:max(data_stress$t)) 
+{
+    hormone_t = data_stress[t-1,] %>% pull(stress_hormone)
+    stressor = data_stress[t,] %>% pull(stressor)
+    hormone_tplus1 = hormone_t * (1.0 - removal) + 
+        baseline_influx + 
+        stress_influx * stressor
+
+    data_stress[t,"stress_hormone"] = hormone_t
 }
+
+p_dynamics <- ggplot(
+        data = data_stress,
+        mapping = aes(x = t, y = stress_hormone)) +
+    geom_line()
+
+plot.list[[plot.list.idx]] <- p_dynamics
 
 title <- ""
 

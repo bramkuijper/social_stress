@@ -4,7 +4,6 @@ options(repos = c(CRAN = "https://cloud.r-project.org"))
 if (!requireNamespace("datetime", quietly = TRUE)) {
   install.packages("datetime")
 }
-install.packages("lubridate")
 
 library(datetime)
 library(lubridate)
@@ -14,7 +13,7 @@ file_name_prefix <- "sim_stress_social"
 
 npatches_vals = c(200) # number of patches
 n_vals = c(20) # num individuals per patch
-max_time_vals = c(30000) # max time
+max_time_vals = c(100000) # max time
 s_np = c(0.1) # switch rate NP to P
 s_p = c(0.1) # switch rate P to NP 
 md_vals = c(1.0) # weight of damage-related mortality
@@ -27,6 +26,14 @@ g_vals = c(0.1) # Damage removal per timestep
 k_vals = c(0.1) # Increase in damage due to hormone != optimum
 
 ctr <- 0
+
+fecundity_power <- 1.0
+hmax <- 10.0
+vigilance_on <- 0
+run_end_assay <- 0
+assay_n_individuals <- 0
+assay_pre_time <- 0 
+assay_post_time <- 0 
 
 # date time
 current_time <- now()
@@ -49,15 +56,36 @@ for (npatches_i in npatches_vals) {
                                                     ctr <- ctr + 1
 
                                                     # Output file name
-                                                    output_file_name <- paste0(file_name_prefix, "_", ctr, "_", formatted_time)
+                                                    output_file_name <- paste0(
+                                                            file_name_prefix, "_", 
+                                                            ctr, "_", 
+                                                            formatted_time)
 
                                                     # Write the command line with parameters
                                                     writeLines(text = paste0(
-                                                        exe, " ", output_file_name, " ", npatches_i, 
-                                                        " ", n_i, " ", max_time_i, " ", s_np_i, 
-                                                        " ", s_p_i, " ", md_i, " ", mv_i, 
-                                                        " ", p_mig_i, " ", p_attack_i, " ", init_v_i, 
-                                                        " ", init_stress_i, " ", g_i, " ", k_i))
+                                                        exe," ",
+                                                        output_file_name," ",
+                                                        npatches_i," ",
+                                                        n_i," ",
+                                                        max_time_i," ",
+                                                        s_np_i," ",
+                                                        s_p_i, " ",
+                                                        md_i," ",
+                                                        mv_i," ", 
+                                                        p_mig_i," ",
+                                                        p_attack_i, " ",
+                                                        fecundity_power," ",
+                                                        hmax," ",
+                                                        init_v_i," ",
+                                                        init_stress_i, " ",
+                                                        g_i, " ",
+                                                        k_i, " ",
+                                                        vigilance_on," ",
+                                                        run_end_assay," ",
+                                                        assay_n_individuals," ",
+                                                        assay_pre_time," ",
+                                                        assay_post_time," "
+                                                        ))
                                                 }
                                             }
                                         }

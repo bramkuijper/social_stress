@@ -3,7 +3,6 @@
 #include <cassert>
 #include <iostream>
 #include <cmath>
-#include <numeric>
 #include <fstream>
 #include <filesystem>
 #include <vector>
@@ -23,7 +22,9 @@ inline double effective_vigilance(
     {
       return 0.0;
     }
-    
+
+    // express vigilance and make it is bounded
+    // between 0 and 1
     double base_v = 0.5 * (ind.v[0] + ind.v[1]);
 
     if (base_v < 0.0) { base_v = 0.0; }
@@ -777,7 +778,8 @@ void StressSocial::predator_visit()
    
                 if (
                         uniform(rng_r) < 
-                            attack_survival(metapop_iter->breeders[random_breeder_idx].stress_hormone))
+                            attack_survival(
+                                metapop_iter->breeders[random_breeder_idx].stress_hormone))
                 {
                     // we need to implement that individuals can flee the attack 
                     // dependent on their stress hormone level h
@@ -857,50 +859,51 @@ void StressSocial::survive_damage_vigilance()
         {
             if (metapop_iter->breeders[breeder_idx].is_alive)
             {
-                    d = metapop_iter->breeders[breeder_idx].damage;
+                d = metapop_iter->breeders[breeder_idx].damage;
 
-                    assert(std::isfinite(d));
+                assert(std::isfinite(d));
 
-            // use expressed vigilance phenotype (bounded [0,1])
-                    double v = effective_vigilance(metapop_iter->breeders[breeder_idx], param.vigilance);
+        // use expressed vigilance phenotype (bounded [0,1])
+                double v = effective_vigilance(
+                        metapop_iter->breeders[breeder_idx], param.vigilance);
 
 
-                    if (uniform(rng_r) < 1.0 - mu(d, v))
-                    {
-                        // note that mortality due to lack of vigilance
-                        // is elsewhere, namely in predator_visit()
-                        // individual does not survive
-                metapop_iter->breeders[breeder_idx].is_alive = true;
-                    }
-                    else
-                    {
-                      if (time_step == 100 ||
-                          time_step == 1000 ||
-                          (time_step >= 10000 && time_step % 10000 == 0))
-                      {
-                          std::cout << time_step
-                                    << " DAMAGE_DEATH "
-                                    << "damage "
-                                    << d
-                                    << " vigilance "
-                                    << v
-                                    << " attacked "
-                                    << metapop_iter->breeders[breeder_idx].is_attacked
-                                    << std::endl;
-                      }
-                        
-                        // Record the individual's damage immediately before it dies from
-                        // damage-related mortality. This is accumulated across all such deaths
-                        // during the timestep and converted to a mean in write_data().
-                        sum_damage_at_damage_death += d;
-                                  
-                        ++n_death_damage;
-                    metapop_iter->breeders[breeder_idx].is_alive = false;
+                if (uniform(rng_r) < 1.0 - mu(d, v))
+                {
+                    // note that mortality due to lack of vigilance
+                    // is elsewhere, namely in predator_visit()
+                    // individual does not survive
+                    metapop_iter->breeders[breeder_idx].is_alive = true;
                 }
+                else
+                {
+                    if (time_step == 100 ||
+                      time_step == 1000 ||
+                      (time_step >= 10000 && time_step % 10000 == 0))
+                    {
+                      std::cout << time_step
+                                << " DAMAGE_DEATH "
+                                << "damage "
+                                << d
+                                << " vigilance "
+                                << v
+                                << " attacked "
+                                << metapop_iter->breeders[breeder_idx].is_attacked
+                                << std::endl;
+                    }
+
+                    // Record the individual's damage immediately before it dies from
+                    // damage-related mortality. This is accumulated across all such deaths
+                    // during the timestep and converted to a mean in write_data().
+                    sum_damage_at_damage_death += d;
+                              
+                    ++n_death_damage;
+                    metapop_iter->breeders[breeder_idx].is_alive = false;
+                } // end if else 1.0 - mu(d,v)
             } // end if metapop_iter
         } // end for unsigned breeder_idx
     } // for end metapop_iter 
-} // end survival_damage()
+} // end survive_damage_vigilance()
 
 
 // mortality due to baseline mortality, damage and investment in vigilance
@@ -908,7 +911,8 @@ double StressSocial::mu(
         double const damage,
         double const vigilance)
 {
-    // mortality costs associated with 
+    // mortality costs associated with damage and
+    // investment in vigilance
     double mortality_prob{param.m0 + param.md * damage / param.dmax + param.mv * vigilance};
 
     return(mortality_prob);
@@ -930,6 +934,9 @@ void StressSocial::reproduce()
     double group_level_fecundity, individual_fecundity;
 
     // calculate a mean fecundity distribution
+    // we assume that individuals reproduce before survival
+    // as is_alive is not used in calculating the fecundity 
+    // distribution
     for (auto metapop_iter = metapopulation.begin();
             metapop_iter != metapopulation.end();
             ++metapop_iter)
@@ -952,7 +959,7 @@ void StressSocial::reproduce()
 
             double v_eff = effective_vigilance(*breeder_iter, param.vigilance);
             
-    // fecundity cost uses expressed vigilance phenotype (bounded [0,1])
+            // fecundity cost uses expressed vigilance phenotype (bounded [0,1])
             individual_fecundity = 1.0 - std::pow(v_eff, param.fecundity_power);
 
 
@@ -975,7 +982,6 @@ void StressSocial::reproduce()
         // add the total fecundity value to the list of group-level fecundities
         group_level_fecundities.push_back(group_level_fecundity);
         
-
         // accumulate global fecundity across all patches so that migration works
         total_global_fecundity += group_level_fecundity;
 
@@ -988,8 +994,14 @@ void StressSocial::reproduce()
             group_level_fecundities.end());
 
     // variable holding the patch we will sample new offspring from
-    unsigned patch_producing_new_offspring_idx, mum_idx, dad_idx;
-    double probability_sample_immigrant, migrant_contribution, local_contribution, total_local_fecundity;
+    unsigned patch_producing_new_offspring_idx, 
+             mum_idx, 
+             dad_idx;
+
+    double probability_sample_immigrant, 
+           migrant_contribution, 
+           local_contribution, 
+           total_local_fecundity;
 
 
     // tasks ahead:
@@ -1013,7 +1025,8 @@ void StressSocial::reproduce()
         local_contribution = (1.0 - param.p_mig) * total_local_fecundity;
 
         // probability that we draw parents from another patch
-        probability_sample_immigrant = migrant_contribution / (local_contribution + migrant_contribution);
+        probability_sample_immigrant = migrant_contribution / 
+            (local_contribution + migrant_contribution);
 
         // calculate fecundity for each group
         // dependent on individual vigilance values
@@ -1027,7 +1040,8 @@ void StressSocial::reproduce()
                 if (uniform(rng_r) < probability_sample_immigrant)
                 {
                     // sample remote patch
-                    patch_producing_new_offspring_idx = group_level_fecundity_distribution(rng_r);
+                    patch_producing_new_offspring_idx = 
+                        group_level_fecundity_distribution(rng_r);
 
                     assert(patch_producing_new_offspring_idx < param.npatches);
 
@@ -1098,6 +1112,7 @@ void StressSocial::write_parameters()
         << "hmax;" << param.hmax << ";" << std::endl
         << "dmax;" << param.dmax << ";" << std::endl
         << "survival_power;" << param.survival_power << ";" << std::endl
+        << "theta_hormone;" << param.theta_hormone << ";" << std::endl
         << "vigilance;" << param.vigilance << ";" << std::endl // vigilance/on off written to file (0 off, 1 on)
         << "run_end_assay;" << param.run_end_assay << ";" << std::endl
         << "assay_n_individuals;" << param.assay_n_individuals << ";" << std::endl
@@ -1116,7 +1131,7 @@ void StressSocial::write_parameters()
         << std::endl;
 }
 
-// update the stress hormone level for each individual
+// update the stress hormone and damage levels for each individual
 void StressSocial::update_stress_hormone()
 {
     double stress_hormone_tplus1, stress_hormone, r, stress_influx, 
