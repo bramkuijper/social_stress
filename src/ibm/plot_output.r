@@ -173,7 +173,7 @@ data_stress <- data.frame(
         t = seq(0,tmax_iter),
         stress_hormone = NA) %>% 
     mutate(
-            stressor = if_else(t == tmax_iter / 2,1,0)
+            stressor = if_else(t == t_stressor,1,0)
             )
 
 # start the stress hormone at its optimum
@@ -192,7 +192,7 @@ for (t in 2:max(data_stress$t))
         baseline_influx + 
         stress_influx * stressor
 
-    data_stress[t,"stress_hormone"] = hormone_t
+    data_stress[t,"stress_hormone"] = hormone_tplus1
 }
 
 p_dynamics <- ggplot(
