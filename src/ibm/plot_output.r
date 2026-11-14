@@ -180,21 +180,28 @@ data_stress <- data.frame(
             stressor = if_else(t == t_stressor,1,0)
             )
 
-print(params)
-
 # start the stress hormone at its optimum
 hormone_optimum <- as.numeric(params["theta_hormone"])
 data_stress[1,"stress_hormone"] <- hormone_optimum
 
 baseline_influx <- data.tibble %>% tail(n = 1) %>% pull(mean_baseline_influx)
 stress_influx <- data.tibble %>% tail(n = 1) %>% pull(mean_stress_influx)
-g <- as.numeric(params["g"])
+
+removal <- 0
+
+if ("mean_removal" %in% names(data.tibble))
+{
+    removal <- data.tibble %>% tail(n = 1) %>% pull(mean_removal)
+} else
+{
+    removal <- as.numeric(params["g"])
+}
 
 for (t in 2:max(data_stress$t)) 
 {
     hormone_t = data_stress[t-1,] %>% pull(stress_hormone)
     stressor = data_stress[t,] %>% pull(stressor)
-    hormone_tplus1 = hormone_t * (1.0 - g) + 
+    hormone_tplus1 = hormone_t * (1.0 - removal) + 
         baseline_influx + 
         stress_influx * stressor
 
