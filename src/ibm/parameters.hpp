@@ -20,7 +20,7 @@ class Parameters
 {
     public:
 
-        unsigned data_output_interval{1};
+        unsigned data_output_interval{10};
 
         // population size (no sex differences)
         unsigned n{20};

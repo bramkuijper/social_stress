@@ -291,7 +291,7 @@ void StressSocial::switch_predator_status()
             }
         }
     }
-}
+} // switch_predator_status
 
 // print out the distribution/values of all the individuals
 // creation of separate debug file
@@ -1270,6 +1270,7 @@ void StressSocial::write_parameters()
         << std::endl
         << "seed;" << seed << ";" << std::endl
         << "time_step;" << time_step << ";" << std::endl
+        << "max_time;" << param.max_time << ";" << std::endl
         << "dispersal;" << param.p_mig << ";" << std::endl
         << "npatches;" << param.npatches << ";" << std::endl
         << "n;" << param.n << ";" << std::endl
@@ -1282,6 +1283,7 @@ void StressSocial::write_parameters()
         << "hmin;" << param.hmin << ";" << std::endl
         << "hmax;" << param.hmax << ";" << std::endl
         << "dmax;" << param.dmax << ";" << std::endl
+        << "theta_hormone;" << param.theta_hormone << ";" << std::endl
         << "survival_power;" << param.survival_power << ";" << std::endl
         << "vigilance;" << param.vigilance << ";" << std::endl // vigilance/on off written to file (0 off, 1 on)
         << "run_end_assay;" << param.run_end_assay << ";" << std::endl

@@ -69,7 +69,7 @@ for (npatches_i in npatches_vals) {
                                                         output_file_name," ",
                                                         npatches_i," ",
                                                         n_i," ",
-                                                        max_time_i," ",
+                                                        format(max_time_i,scientific = F)," ",
                                                         s_np_i," ",
                                                         s_p_i, " ",
                                                         md_i," ",

@@ -93,6 +93,11 @@ params <- data.tibble.params %>% pivot_wider(
         names_from = name
         ,values_from = value)
 
+if (nrow(data.tibble.params) > 10000)
+{
+    data.tibble <- data.tibble %>% filter(generation %% 100 == 0)
+}
+
 plot.structure <- fromJSON(jsonstuff, simplifyVector = F)
 
 plot.structure.l <- length(plot.structure)
@@ -174,6 +179,8 @@ data_stress <- data.frame(
     mutate(
             stressor = if_else(t == t_stressor,1,0)
             )
+
+print(params)
 
 # start the stress hormone at its optimum
 hormone_optimum <- as.numeric(params["theta_hormone"])
